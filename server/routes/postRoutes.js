@@ -1,13 +1,39 @@
 import { Router } from "express";
 
-import { createPost } from "../controllers/postController.js";
+import {
+  createPost,
+  getPostById,
+  getPostsByUsername,
+  explorePosts,
+} from "../controllers/postController.js";
 import protect from "../middleware/auth.js";
+import optionalAuth from "../middleware/optionalAuth.js";
 import { uploadPostImage } from "../middleware/upload.js";
 import { writeLimiter } from "../middleware/rateLimiters.js";
 import validate from "../middleware/validate.js";
-import { createPostRules } from "../validators/postValidator.js";
+import { createPostRules, exploreRules } from "../validators/postValidator.js";
 
 const router = Router();
+
+// Route ordering note:
+// Express matches routes top-to-bottom. The literal `/explore` and the
+// nested `/user/:username` MUST be declared before `/:id`, otherwise the
+// catch-all `/:id` would swallow them as ids and 404 every request.
+
+// GET /api/posts/explore
+// Public trending feed. `optionalAuth` enriches each post with
+// `isLikedByMe` for signed-in viewers without forcing them to log in.
+router.get("/explore", optionalAuth, validate(exploreRules), explorePosts);
+
+// GET /api/posts/user/:username
+// A user's own timeline. Visibility honours per-account privacy: a private
+// account's posts return 404 to anyone who isn't the owner or a follower.
+router.get("/user/:username", optionalAuth, getPostsByUsername);
+
+// GET /api/posts/:id
+// Single post fetch. 404 hides the difference between deleted, hidden and
+// privately-restricted posts (anti-enumeration).
+router.get("/:id", optionalAuth, getPostById);
 
 // POST /api/posts
 // Middleware order is intentional and load-bearing:
@@ -29,6 +55,6 @@ router.post(
   createPost
 );
 
-// Read / update / delete / like routes are filled in STEPS 8–10.
+// Update / delete / like routes are filled in STEPS 9–10.
 
 export default router;
