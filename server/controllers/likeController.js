@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 import Post from "../models/Post.js";
+import { createAndEmit } from "../services/notificationService.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 // POST /api/posts/:id/like
@@ -81,12 +82,22 @@ export const toggleLike = asyncHandler(async (req, res) => {
     });
   }
 
-  // Notification trigger lives in STEP 17 — the emission service will be
-  // wired in here and is intentionally skipped on self-likes so users do
-  // not get a buzz from their own button-tap.
-  // if (String(post.author) !== viewerKey) {
-  //   await emitLikeNotification({ post, actor: req.user });
-  // }
+  // Fire the notification AFTER the like has been persisted so we never
+  // notify on an action that didn't actually take effect. Awaited (rather
+  // than fire-and-forget) so a failure surfaces in the request log instead
+  // of dangling as an unhandled rejection — but wrapped so it can never
+  // turn a successful like into a 500. The self-like guard lives inside
+  // `createAndEmit` as a defence-in-depth.
+  try {
+    await createAndEmit({
+      recipient: post.author,
+      sender: viewerId,
+      type: "like",
+      post: post._id,
+    });
+  } catch (err) {
+    console.error("[notification] failed to emit like notification:", err);
+  }
 
   return res.json({
     status: "success",

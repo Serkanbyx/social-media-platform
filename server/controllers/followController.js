@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 import User from "../models/User.js";
+import { createAndEmit } from "../services/notificationService.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 // POST /api/users/:id/follow
@@ -89,14 +90,21 @@ export const toggleFollow = asyncHandler(async (req, res) => {
     ),
   ]);
 
-  // Notification trigger lives in STEP 17 — the emission service will be
-  // wired in here. Self-follow is already rejected above so no extra guard
-  // is required at the call site.
-  // await createAndEmit({
-  //   recipient: targetId,
-  //   sender: myId,
-  //   type: "follow",
-  // });
+  // Fire the notification AFTER both sides of the relationship are
+  // persisted so we never notify on a follow that didn't take effect.
+  // Self-follow is already rejected up top, so no extra guard is needed
+  // at the call site (the service has its own defence-in-depth check).
+  // Wrapped so a notification failure cannot turn a successful follow
+  // into a 500.
+  try {
+    await createAndEmit({
+      recipient: targetId,
+      sender: myId,
+      type: "follow",
+    });
+  } catch (err) {
+    console.error("[notification] failed to emit follow notification:", err);
+  }
 
   const fresh = await User.findById(targetId).select("followersCount");
 

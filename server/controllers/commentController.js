@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
+import { createAndEmit } from "../services/notificationService.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 // Public author projection — never leak email, password, preferences, etc.
@@ -64,12 +65,21 @@ export const createComment = asyncHandler(async (req, res) => {
 
   await comment.populate("author", AUTHOR_PUBLIC_FIELDS);
 
-  // Notification trigger lives in STEP 17 — the emission service will be
-  // wired in here and is intentionally skipped when the commenter is the
-  // post author so users do not get a buzz from their own comment.
-  // if (String(post.author) !== String(req.user._id)) {
-  //   await emitCommentNotification({ post, actor: req.user });
-  // }
+  // Fire the notification AFTER the comment + counter are persisted so we
+  // never notify on an action that didn't actually take effect. Wrapped so
+  // a notification failure can never turn a successful comment into a 500
+  // — the self-comment guard lives inside `createAndEmit` as a
+  // defence-in-depth.
+  try {
+    await createAndEmit({
+      recipient: post.author,
+      sender: req.user._id,
+      type: "comment",
+      post: post._id,
+    });
+  } catch (err) {
+    console.error("[notification] failed to emit comment notification:", err);
+  }
 
   return res.status(201).json({ status: "success", comment });
 });
