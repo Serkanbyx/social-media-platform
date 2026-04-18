@@ -22,6 +22,30 @@ export const TOKEN_STORAGE_KEY = "token";
 export const THEME_STORAGE_KEY = "pulse:theme";
 export const FONT_SIZE_STORAGE_KEY = "pulse:font-size";
 
+/* ----------------------------------------------------------------------
+ * Content limits — mirrored on the server in the relevant validators so
+ * the UI can show counters and prevent the obvious 400s before they leave
+ * the browser. Update both sides if any of these values move.
+ * --------------------------------------------------------------------*/
+export const MAX_POST_CONTENT = 1000;
+export const MAX_BIO = 200;
+export const MAX_USERNAME = 20;
+export const MAX_NAME = 50;
+export const MAX_COMMENT = 500;
+
+/* ----------------------------------------------------------------------
+ * Upload limits & accepted MIME types — used by avatar/composer file
+ * pickers and the attachment picker.
+ * --------------------------------------------------------------------*/
+export const MAX_AVATAR_MB = 5;
+export const MAX_POST_IMAGE_MB = 8;
+export const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+
 /**
  * Clamp a requested limit into the [1, MAX_PAGE_LIMIT] range so a stray
  * `Infinity` or negative value can't reach the network layer.

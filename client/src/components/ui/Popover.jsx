@@ -1,0 +1,84 @@
+import { cloneElement, useId, useRef, useState } from "react";
+import { useClickOutside } from "../../hooks/useClickOutside.js";
+import { useEscapeKey } from "../../hooks/useEscapeKey.js";
+import { cn } from "../../utils/cn.js";
+
+/**
+ * Popover — generic floating panel anchored to a trigger.
+ *
+ * Distinct from Dropdown because the content can be anything (rich
+ * panels, emoji picker, notification preview) — Popover only owns the
+ * open/close lifecycle, not the inner layout.
+ *
+ * Triggers passed as children should be a single React element so we
+ * can attach the open/close handlers via `cloneElement`.
+ */
+const ALIGN_CLASSES = {
+  start: "left-0 origin-top-left",
+  center: "left-1/2 -translate-x-1/2 origin-top",
+  end: "right-0 origin-top-right",
+};
+
+export default function Popover({
+  trigger,
+  children,
+  align = "end",
+  width = "w-72",
+  className = "",
+  panelClassName = "",
+  defaultOpen = false,
+}) {
+  const reactId = useId();
+  const panelId = `popover-${reactId}`;
+  const wrapperRef = useRef(null);
+  const triggerRef = useRef(null);
+  const [open, setOpen] = useState(defaultOpen);
+
+  const close = () => setOpen(false);
+
+  useClickOutside(wrapperRef, close, open);
+  useEscapeKey(() => {
+    setOpen(false);
+    triggerRef.current?.focus?.({ preventScroll: true });
+  }, open);
+
+  const triggerEl = cloneElement(trigger, {
+    ref: (node) => {
+      triggerRef.current = node;
+      const original = trigger.ref;
+      if (typeof original === "function") original(node);
+      else if (original && typeof original === "object") original.current = node;
+    },
+    onClick: (event) => {
+      trigger.props.onClick?.(event);
+      if (!event.defaultPrevented) setOpen((value) => !value);
+    },
+    "aria-haspopup": "dialog",
+    "aria-expanded": open,
+    "aria-controls": panelId,
+  });
+
+  const renderedChildren =
+    typeof children === "function" ? children({ close }) : children;
+
+  return (
+    <div ref={wrapperRef} className={cn("relative inline-block", className)}>
+      {triggerEl}
+      {open && (
+        <div
+          id={panelId}
+          role="dialog"
+          aria-modal="false"
+          className={cn(
+            "absolute top-full z-40 mt-2 overflow-hidden rounded-xl surface-overlay animate-modal-in",
+            ALIGN_CLASSES[align] || ALIGN_CLASSES.end,
+            width,
+            panelClassName
+          )}
+        >
+          {renderedChildren}
+        </div>
+      )}
+    </div>
+  );
+}
