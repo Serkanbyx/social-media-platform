@@ -15,8 +15,8 @@ import {
  * when the body is a `FormData` — never set it manually.
  */
 
-export const createPost = async (formData) => {
-  const { data } = await api.post("/posts", formData);
+export const createPost = async (formData, options = {}) => {
+  const { data } = await api.post("/posts", formData, options);
   return data;
 };
 
