@@ -8,6 +8,7 @@ import {
   updatePost,
   deletePost,
 } from "../controllers/postController.js";
+import { toggleLike } from "../controllers/likeController.js";
 import protect from "../middleware/auth.js";
 import optionalAuth from "../middleware/optionalAuth.js";
 import { uploadPostImage } from "../middleware/upload.js";
@@ -74,6 +75,11 @@ router.patch("/:id", protect, writeLimiter, validate(updatePostRules), updatePos
 // decrements the author's `postsCount` in a single hop.
 router.delete("/:id", protect, writeLimiter, deletePost);
 
-// Like / unlike toggle is filled in STEP 10.
+// POST /api/posts/:id/like
+// Idempotent like / unlike toggle. `writeLimiter` (30/min) blocks the
+// "spam-like to spam-notify" harassment pattern before the controller
+// even runs; the controller itself uses `$addToSet` + a conditional
+// `updateOne` so concurrent double-taps cannot drift the counter.
+router.post("/:id/like", protect, writeLimiter, toggleLike);
 
 export default router;
