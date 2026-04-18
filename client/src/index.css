@@ -241,6 +241,19 @@
   }
 }
 
+@keyframes shrink-out {
+  from {
+    opacity: 1;
+    max-height: 800px;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: scale(0.98);
+  }
+}
+
 @layer utilities {
   .animate-like-pop {
     animation: like-pop var(--duration-spring) var(--ease-spring);
@@ -253,6 +266,10 @@
   }
   .animate-fade-up {
     animation: fade-up var(--duration-slow) var(--ease-out-quart);
+  }
+  .animate-shrink-out {
+    animation: shrink-out 180ms var(--ease-out-quart) forwards;
+    overflow: hidden;
   }
 }
 
