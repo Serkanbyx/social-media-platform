@@ -9,6 +9,10 @@ import {
   deletePost,
 } from "../controllers/postController.js";
 import { toggleLike } from "../controllers/likeController.js";
+import {
+  createComment,
+  getCommentsByPost,
+} from "../controllers/commentController.js";
 import protect from "../middleware/auth.js";
 import optionalAuth from "../middleware/optionalAuth.js";
 import { uploadPostImage } from "../middleware/upload.js";
@@ -19,6 +23,7 @@ import {
   updatePostRules,
   exploreRules,
 } from "../validators/postValidator.js";
+import { createCommentRules } from "../validators/commentValidator.js";
 
 const router = Router();
 
@@ -81,5 +86,28 @@ router.delete("/:id", protect, writeLimiter, deletePost);
 // even runs; the controller itself uses `$addToSet` + a conditional
 // `updateOne` so concurrent double-taps cannot drift the counter.
 router.post("/:id/like", protect, writeLimiter, toggleLike);
+
+// Comment endpoints are nested under their parent post so the URL space
+// stays hierarchical (`/api/posts/:postId/comments`). The standalone
+// `DELETE /api/comments/:id` lives in `routes/commentRoutes.js` because
+// it has no parent. All three handlers share `controllers/commentController.js`.
+
+// POST /api/posts/:postId/comments
+// Authenticated, rate-limited create. `writeLimiter` (30/min) blocks
+// comment-spam before validation runs; the controller verifies the post
+// exists and is not hidden, then increments the post's `commentsCount`.
+router.post(
+  "/:postId/comments",
+  protect,
+  writeLimiter,
+  validate(createCommentRules),
+  createComment
+);
+
+// GET /api/posts/:postId/comments
+// Public cursor-paginated list. `optionalAuth` is wired in so future
+// per-viewer flags (e.g. "is this my comment?") can be added without a
+// route signature change.
+router.get("/:postId/comments", optionalAuth, getCommentsByPost);
 
 export default router;
