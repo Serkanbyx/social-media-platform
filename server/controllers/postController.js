@@ -272,4 +272,86 @@ export const explorePosts = asyncHandler(async (req, res) => {
   });
 });
 
-export default { createPost, getPostById, getPostsByUsername, explorePosts };
+// Centralised ownership check used by every mutating endpoint on a post.
+// Admins always pass; otherwise the caller must be the post's author.
+// Returning a boolean (rather than throwing) keeps the controllers' control
+// flow obvious and avoids leaking 403s through the generic error handler.
+const canMutatePost = (post, user) => {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  return post.author.equals(user._id);
+};
+
+// PATCH /api/posts/:id
+// Mass-assignment protected: only `content` is read from the body — author,
+// likes, counters and moderation flags can never be edited via this route.
+// Returns 404 (not 403) when the post does not exist so callers can't probe
+// for the existence of hidden / deleted ids.
+export const updatePost = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(404).json({ status: "error", message: "Post not found." });
+  }
+
+  const post = await Post.findById(id);
+  if (!post) {
+    return res.status(404).json({ status: "error", message: "Post not found." });
+  }
+
+  if (!canMutatePost(post, req.user)) {
+    return res
+      .status(403)
+      .json({ status: "error", message: "You are not allowed to modify this post." });
+  }
+
+  // Whitelist destructuring — anything else on the body (likes, isHidden,
+  // author, _id, counters…) is ignored before it can reach the document.
+  const { content } = req.body;
+  post.content = typeof content === "string" ? content.trim() : "";
+
+  // Triggers the pre-validate hook which enforces "must have content or
+  // image" at the storage layer, so an owner cannot end up with an empty
+  // post by clearing the caption of a text-only post.
+  await post.save();
+  await post.populate("author", AUTHOR_PUBLIC_FIELDS);
+
+  return res.json({ status: "success", post });
+});
+
+// DELETE /api/posts/:id
+// Uses the *document* `deleteOne()` so the cascade hook on the Post schema
+// fires: it removes related comments, notifications, the Cloudinary image
+// and decrements the author's `postsCount`. A bulk `deleteMany` would
+// silently skip that hook and leak orphan data.
+export const deletePost = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(404).json({ status: "error", message: "Post not found." });
+  }
+
+  const post = await Post.findById(id);
+  if (!post) {
+    return res.status(404).json({ status: "error", message: "Post not found." });
+  }
+
+  if (!canMutatePost(post, req.user)) {
+    return res
+      .status(403)
+      .json({ status: "error", message: "You are not allowed to delete this post." });
+  }
+
+  await post.deleteOne();
+
+  return res.json({ status: "success" });
+});
+
+export default {
+  createPost,
+  getPostById,
+  getPostsByUsername,
+  explorePosts,
+  updatePost,
+  deletePost,
+};

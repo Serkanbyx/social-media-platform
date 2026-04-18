@@ -38,6 +38,27 @@ export const createPostRules = [
     }),
 ];
 
+// Validation rules for `PATCH /api/posts/:id`.
+//
+// Update is intentionally narrow — only `content` is editable through the
+// API (mass-assignment of `author`, `likes`, `likesCount`, `isHidden`, etc.
+// is enforced in the controller by destructuring). We deliberately allow an
+// empty string here so an owner can clear the caption on an image-only post;
+// the model's `pre("validate")` hook still rejects "no content + no image",
+// so the invariant is upheld at the storage layer.
+export const updatePostRules = [
+  body("content")
+    .exists({ checkNull: true })
+    .withMessage("Post content is required.")
+    .bail()
+    .isString()
+    .withMessage("Post content must be a string.")
+    .bail()
+    .trim()
+    .isLength({ max: MAX_CONTENT_LENGTH })
+    .withMessage(`Post content must be at most ${MAX_CONTENT_LENGTH} characters.`),
+];
+
 // Validation rules for `GET /api/posts/explore`.
 //
 // All three params are optional — an unauthenticated visitor can hit
@@ -64,4 +85,4 @@ export const exploreRules = [
     .withMessage("Cursor must be a valid post id."),
 ];
 
-export default { createPostRules, exploreRules };
+export default { createPostRules, updatePostRules, exploreRules };

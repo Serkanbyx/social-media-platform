@@ -5,13 +5,19 @@ import {
   getPostById,
   getPostsByUsername,
   explorePosts,
+  updatePost,
+  deletePost,
 } from "../controllers/postController.js";
 import protect from "../middleware/auth.js";
 import optionalAuth from "../middleware/optionalAuth.js";
 import { uploadPostImage } from "../middleware/upload.js";
 import { writeLimiter } from "../middleware/rateLimiters.js";
 import validate from "../middleware/validate.js";
-import { createPostRules, exploreRules } from "../validators/postValidator.js";
+import {
+  createPostRules,
+  updatePostRules,
+  exploreRules,
+} from "../validators/postValidator.js";
 
 const router = Router();
 
@@ -55,6 +61,19 @@ router.post(
   createPost
 );
 
-// Update / delete / like routes are filled in STEPS 9–10.
+// PATCH /api/posts/:id
+// Owner-or-admin edit. `writeLimiter` blocks edit-spam before validation runs;
+// `validate(updatePostRules)` enforces content shape; the controller itself
+// performs the ownership check and returns 404 (not 403) for missing posts to
+// avoid leaking the existence of hidden / deleted ids.
+router.patch("/:id", protect, writeLimiter, validate(updatePostRules), updatePost);
+
+// DELETE /api/posts/:id
+// Owner-or-admin delete. Triggers the Post `deleteOne` cascade hook, which
+// removes related comments + notifications, deletes the Cloudinary asset and
+// decrements the author's `postsCount` in a single hop.
+router.delete("/:id", protect, writeLimiter, deletePost);
+
+// Like / unlike toggle is filled in STEP 10.
 
 export default router;
