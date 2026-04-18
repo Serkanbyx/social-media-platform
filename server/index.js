@@ -10,6 +10,7 @@ import connectDB from "./config/db.js";
 import sanitize from "./middleware/sanitize.js";
 import { globalLimiter } from "./middleware/rateLimiters.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
+import { initSocket } from "./socket/index.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -80,13 +81,17 @@ app.use("/api/admin", adminRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// 12. Raw http.Server so Socket.io can attach in STEP 16.
+// 12. Raw http.Server so Socket.io can attach to the same port as HTTP.
 const server = http.createServer(app);
+
+// 13. Socket.io — JWT-authenticated, CORS-locked, per-user private rooms.
+initSocket(server);
 
 const start = async () => {
   await connectDB();
   server.listen(env.PORT, () => {
     console.log(`[server] API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
+    console.log(`[server] Socket.io ready on the same port`);
   });
 };
 
