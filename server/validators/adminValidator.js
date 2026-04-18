@@ -32,7 +32,8 @@ export const listUsersRules = [
     .bail()
     .trim()
     .isLength({ max: SEARCH_MAX })
-    .withMessage(`Search query must be at most ${SEARCH_MAX} characters.`),
+    .withMessage(`Search query must be at most ${SEARCH_MAX} characters.`)
+    .escape(),
   query("role")
     .optional()
     .isIn(ALLOWED_ROLES)

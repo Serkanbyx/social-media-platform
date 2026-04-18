@@ -23,7 +23,9 @@ const SEARCH_MAX = 30;
 // we reject it up-front rather than returning every user in the database.
 // The controller still escapes the value with `escapeRegex` before passing
 // it to Mongo's `$regex`, but trimming + length-clamping here keeps the
-// regex compiler from ever seeing pathological input.
+// regex compiler from ever seeing pathological input. `escape()` neutralises
+// HTML metacharacters as a defence-in-depth so the value is safe to log /
+// echo back into admin tooling without further encoding.
 export const searchRules = [
   query("q")
     .exists({ checkFalsy: true })
@@ -34,7 +36,8 @@ export const searchRules = [
     .bail()
     .trim()
     .isLength({ min: SEARCH_MIN, max: SEARCH_MAX })
-    .withMessage(`Search query must be between ${SEARCH_MIN} and ${SEARCH_MAX} characters.`),
+    .withMessage(`Search query must be between ${SEARCH_MIN} and ${SEARCH_MAX} characters.`)
+    .escape(),
 ];
 
 // Allowed values for nested `preferences.*` fields. Mirrors the User schema
@@ -71,7 +74,8 @@ export const updateProfileRules = [
     .bail()
     .trim()
     .isLength({ max: BIO_MAX })
-    .withMessage(`Bio must be at most ${BIO_MAX} characters.`),
+    .withMessage(`Bio must be at most ${BIO_MAX} characters.`)
+    .escape(),
 
   body("username")
     .optional()

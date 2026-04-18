@@ -35,7 +35,12 @@ export const createPostRules = [
         throw new Error("Post must have content or an image.");
       }
       return true;
-    }),
+    })
+    // `escape()` runs LAST so the "must have content or image" custom rule
+    // sees the raw user input. Stored content is HTML-encoded as a defence-
+    // in-depth: even if a future client renders posts with `dangerouslySet
+    // InnerHTML`, the persisted value cannot carry a live `<script>` payload.
+    .escape(),
 ];
 
 // Validation rules for `PATCH /api/posts/:id`.
@@ -56,7 +61,8 @@ export const updatePostRules = [
     .bail()
     .trim()
     .isLength({ max: MAX_CONTENT_LENGTH })
-    .withMessage(`Post content must be at most ${MAX_CONTENT_LENGTH} characters.`),
+    .withMessage(`Post content must be at most ${MAX_CONTENT_LENGTH} characters.`)
+    .escape(),
 ];
 
 // Validation rules for `GET /api/posts/explore`.
@@ -73,7 +79,8 @@ export const exploreRules = [
     .bail()
     .trim()
     .isLength({ max: MAX_SEARCH_LENGTH })
-    .withMessage(`Search query must be at most ${MAX_SEARCH_LENGTH} characters.`),
+    .withMessage(`Search query must be at most ${MAX_SEARCH_LENGTH} characters.`)
+    .escape(),
   query("limit")
     .optional()
     .isInt({ min: 1, max: MAX_PAGE_SIZE })
