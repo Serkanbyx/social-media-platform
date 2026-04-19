@@ -21,8 +21,8 @@ import { usePreferences } from "../../context/usePreferences.js";
 import { useDebounce } from "../../hooks/useDebounce.js";
 import * as userService from "../../services/userService.js";
 import { SEARCH_DEBOUNCE_MS } from "../../utils/constants.js";
-import logoUrl from "../../assets/logo.svg";
 import Avatar from "../ui/Avatar.jsx";
+import Logo from "../ui/Logo.jsx";
 import NotificationBell from "../notification/NotificationBell.jsx";
 
 /**
@@ -451,23 +451,10 @@ export default function Navbar() {
           <Link
             to="/"
             aria-label="Pulse home"
-            className="text-brand-600 transition-transform duration-fast hover:scale-[1.03] dark:text-brand-400"
+            className="transition-transform duration-fast hover:scale-[1.03]"
           >
-            <img src={logoUrl} alt="Pulse" className="hidden h-7 w-auto md:block" />
-            {/* On mobile we crop to the glyph only. The previous clip-path
-             * value (64%) left a half-rendered "P" next to the icon, which
-             * read as a layout bug at narrow widths. A 7x7 wrapper with
-             * overflow hidden reliably shows just the rounded square. */}
-            <span
-              aria-hidden="true"
-              className="block h-7 w-7 overflow-hidden md:hidden"
-            >
-              <img
-                src={logoUrl}
-                alt=""
-                className="block h-7 w-auto max-w-none"
-              />
-            </span>
+            <Logo wordmark className="hidden h-7 w-auto md:block" />
+            <Logo wordmark={false} className="h-7 w-7 md:hidden" />
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">

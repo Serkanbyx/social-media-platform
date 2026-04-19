@@ -4,6 +4,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 
 import { THEME_STORAGE_KEY } from "../../utils/constants.js";
 import logoUrl from "../../assets/logo.svg";
+import Logo from "../ui/Logo.jsx";
 
 /**
  * AuthShell — shared chrome for Login & Register.
@@ -166,9 +167,9 @@ export default function AuthShell({ title, subtitle, children, footer }) {
           <Link
             to="/"
             aria-label="Pulse home"
-            className="mb-8 inline-flex items-center text-brand-600 lg:hidden dark:text-brand-400"
+            className="mb-8 inline-flex items-center lg:hidden"
           >
-            <img src={logoUrl} alt="Pulse" className="h-7 w-auto" />
+            <Logo wordmark className="h-7 w-auto" />
           </Link>
 
           <section
