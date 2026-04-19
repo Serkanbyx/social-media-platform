@@ -102,7 +102,9 @@ export default function CreatePostForm({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [showRestored, setShowRestored] = useState(false);
+  const [showRestored, setShowRestored] = useState(
+    () => !!draft?.content && draft.content.trim().length > 0
+  );
   const [discardOpen, setDiscardOpen] = useState(false);
 
   const textareaRef = useRef(null);
@@ -116,15 +118,6 @@ export default function CreatePostForm({
   const errorId = `${formId}-error`;
 
   useAutoResizeTextarea(textareaRef, content, { maxHeight: 320 });
-
-  // Surface the "Restored draft" banner once on mount when the persisted
-  // draft is non-empty. Intentionally not reactive to later draft writes.
-  useEffect(() => {
-    if (draft?.content && draft.content.trim().length > 0) {
-      setShowRestored(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Autosave — debounced so we don't thrash localStorage on every keystroke.
   const debouncedContent = useDebounce(content, 500);

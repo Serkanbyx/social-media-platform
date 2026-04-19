@@ -185,7 +185,8 @@ function PostGrid({ posts = [], className = "" }) {
   );
 }
 
-PostGrid.Skeleton = PostGridSkeleton;
-PostGrid.EmptyIcon = ImageIcon;
+const MemoizedPostGrid = memo(PostGrid);
+MemoizedPostGrid.Skeleton = PostGridSkeleton;
+MemoizedPostGrid.EmptyIcon = ImageIcon;
 
-export default memo(PostGrid);
+export default MemoizedPostGrid;
