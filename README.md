@@ -36,12 +36,15 @@ A full-stack social media platform built with the **MERN** stack (MongoDB, Expre
 - **Accessibility (a11y)** — WCAG 2.1 AA targeted: semantic landmarks, keyboard navigation, `:focus-visible`, ARIA on icon-only buttons, polite live region on the bell, and `prefers-reduced-motion` honoured.
 - **Performance** — Route-level `React.lazy()` code splitting, named imports for `lucide-react` and `date-fns`, Cloudinary `f_auto,q_auto`, LCP image hinted with `fetchpriority="high"`, skeletons + `aspect-ratio` to avoid CLS.
 - **Security Hardened** — Helmet, CORS whitelist, rate limiting, NoSQL sanitization, JWT, bcrypt, MIME-checked uploads, and authenticated WebSocket handshakes.
+- **API Documentation** — Interactive Swagger UI at `/api-docs` and a raw OpenAPI 3 spec at `/api-docs.json`, plus a themed welcome page at `/` with version and quick links.
 
 ---
 
 ## Live Demo
 
-[🚀 View Live Demo](https://social-media-platformm.netlify.app/)
+- 🚀 **Frontend (Netlify):** [social-media-platformm.netlify.app](https://social-media-platformm.netlify.app/)
+- ⚙️ **API (Render):** [social-media-platform-u4xr.onrender.com](https://social-media-platform-u4xr.onrender.com/)
+- 📖 **API Documentation (Swagger UI):** [`/api-docs`](https://social-media-platform-u4xr.onrender.com/api-docs)
 
 > The frontend is deployed to **Netlify** and the API + Socket.io server is deployed to **Render**. The first request after a cold start may take 30-60 seconds while the free Render instance spins up.
 
@@ -246,7 +249,7 @@ cd server && npm run dev
 cd client && npm run dev
 ```
 
-The API listens on `http://localhost:5000` and the SPA on `http://localhost:5173`. Visit `http://localhost:5000/api/health` to confirm the server is up.
+The API listens on `http://localhost:5000` and the SPA on `http://localhost:5173`. Visit `http://localhost:5000/api/health` to confirm the server is up, or open `http://localhost:5000/api-docs` to browse the **interactive Swagger / OpenAPI documentation** for every endpoint (also available as raw JSON at `/api-docs.json`).
 
 **5. Seed the admin account (run once):**
 
@@ -326,6 +329,8 @@ Private accounts hide their posts, follower / following lists, and post details 
 ## API Endpoints
 
 Base URL: `${VITE_API_URL}` (defaults to `http://localhost:5000/api`).
+
+> 📖 **Interactive docs:** every endpoint below is also documented via Swagger UI at [`/api-docs`](http://localhost:5000/api-docs) with request / response schemas and a built-in "Try it out" runner. The raw OpenAPI 3 spec lives at [`/api-docs.json`](http://localhost:5000/api-docs.json).
 
 > Auth column legend: **Public** = no token required • **Optional** = `optionalAuth` (richer response if a valid token is sent) • **User** = `protect` required • **Admin** = `protect` + `adminOnly` required.
 
