@@ -28,6 +28,13 @@ const preferencesSchema = new Schema(
       enum: ["en"],
       default: "en",
     },
+    fontSize: {
+      type: String,
+      enum: ["sm", "md", "lg"],
+      default: "md",
+    },
+    reduceMotion: { type: Boolean, default: false },
+    compactMode: { type: Boolean, default: false },
     privacy: {
       showEmail: { type: Boolean, default: false },
       privateAccount: { type: Boolean, default: false },

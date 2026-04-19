@@ -98,6 +98,12 @@
     @apply bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
+    /* Crossfade between light and dark themes so toggling the `dark` class
+       on <html> never produces a hard flash. Property-scoped so layout
+       transitions are not affected. */
+    transition:
+      background-color var(--duration-base) var(--ease-out-quart),
+      color var(--duration-base) var(--ease-out-quart);
   }
 
   ::selection {
@@ -306,6 +312,12 @@
 
 /* ---------------------------------------------------------------------
  * 6. Reduced motion — accessibility-first
+ *
+ *    Two paths converge here:
+ *     - The OS `prefers-reduced-motion: reduce` media query.
+ *     - The opt-in `.motion-reduce-forced` class set by AppearanceSettings
+ *       so users on systems that don't expose the OS preference can still
+ *       calm the UI down.
  * -------------------------------------------------------------------*/
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -316,4 +328,39 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.motion-reduce-forced *,
+.motion-reduce-forced *::before,
+.motion-reduce-forced *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------------------------------------------------------------------
+ * 7. Font size scaling — applied to <html> by PreferencesContext.
+ *    Browsers compute every `rem` from the root font-size, so changing
+ *    this value rescales the entire UI without component-level work.
+ * -------------------------------------------------------------------*/
+.font-size-sm {
+  font-size: 14px;
+}
+.font-size-md {
+  font-size: 16px;
+}
+.font-size-lg {
+  font-size: 18px;
+}
+
+/* ---------------------------------------------------------------------
+ * 8. Compact mode — opt-in tighter spacing for list-heavy surfaces.
+ *    Components can opt in by reading the class, but the cheap default
+ *    is to scale gaps and vertical paddings on common containers.
+ * -------------------------------------------------------------------*/
+.compact-mode .compact-shrink {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * (1 - var(--tw-space-y-reverse))) !important;
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse)) !important;
 }

@@ -20,6 +20,10 @@ import { useAuth } from "./AuthContext.jsx";
  *  - The `theme` is applied to `<html>` via the `dark` class. When set to
  *    `"system"` we also subscribe to `matchMedia('(prefers-color-scheme: dark)')`
  *    so the page reacts the moment the OS toggles, with no manual refresh.
+ *  - `fontSize`, `reduceMotion` and `compactMode` are mirrored to the same
+ *    `<html>` element via dedicated classes. Keeping every UI-affecting
+ *    preference applied at the document root means consumers never have
+ *    to thread the values through the component tree.
  *  - `updatePreference(path, value)` is optimistic: we update the user
  *    object in `AuthContext` first, then PATCH the server. On failure we
  *    roll back so the UI never lies about persisted state.
@@ -27,9 +31,19 @@ import { useAuth } from "./AuthContext.jsx";
 
 const PreferencesContext = createContext(null);
 
+const FONT_SIZE_CLASSES = ["font-size-sm", "font-size-md", "font-size-lg"];
+const FONT_SIZE_TO_CLASS = {
+  sm: "font-size-sm",
+  md: "font-size-md",
+  lg: "font-size-lg",
+};
+
 const DEFAULT_PREFERENCES = {
   theme: "system",
   language: "en",
+  fontSize: "md",
+  reduceMotion: false,
+  compactMode: false,
   privacy: { showEmail: false, privateAccount: false },
   notifications: { likes: true, comments: true, follows: true },
 };
@@ -62,6 +76,20 @@ const applyTheme = (theme) => {
   root.classList.toggle("dark", isDark);
 };
 
+const applyFontSize = (size) => {
+  const root = document.documentElement;
+  for (const cls of FONT_SIZE_CLASSES) root.classList.remove(cls);
+  root.classList.add(FONT_SIZE_TO_CLASS[size] || FONT_SIZE_TO_CLASS.md);
+};
+
+const applyReduceMotion = (enabled) => {
+  document.documentElement.classList.toggle("motion-reduce-forced", !!enabled);
+};
+
+const applyCompactMode = (enabled) => {
+  document.documentElement.classList.toggle("compact-mode", !!enabled);
+};
+
 export function PreferencesProvider({ children }) {
   const { user, updateUser } = useAuth();
 
@@ -81,7 +109,7 @@ export function PreferencesProvider({ children }) {
     [user]
   );
 
-  const { theme } = preferences;
+  const { theme, fontSize, reduceMotion, compactMode } = preferences;
 
   useEffect(() => {
     applyTheme(theme);
@@ -95,6 +123,18 @@ export function PreferencesProvider({ children }) {
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
   }, [theme]);
+
+  useEffect(() => {
+    applyFontSize(fontSize);
+  }, [fontSize]);
+
+  useEffect(() => {
+    applyReduceMotion(reduceMotion);
+  }, [reduceMotion]);
+
+  useEffect(() => {
+    applyCompactMode(compactMode);
+  }, [compactMode]);
 
   const updatePreference = useCallback(
     async (path, value) => {

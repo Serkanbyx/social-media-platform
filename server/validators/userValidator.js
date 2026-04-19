@@ -45,6 +45,7 @@ export const searchRules = [
 // is loaded. Mongoose still enforces these at save time as a safety net.
 const ALLOWED_THEMES = ["light", "dark", "system"];
 const ALLOWED_LANGUAGES = ["en"];
+const ALLOWED_FONT_SIZES = ["sm", "md", "lg"];
 
 // Validation rules for `PATCH /api/users/me`.
 //
@@ -104,6 +105,23 @@ export const updateProfileRules = [
     .optional()
     .isIn(ALLOWED_LANGUAGES)
     .withMessage(`Language must be one of: ${ALLOWED_LANGUAGES.join(", ")}.`),
+
+  body("preferences.fontSize")
+    .optional()
+    .isIn(ALLOWED_FONT_SIZES)
+    .withMessage(`Font size must be one of: ${ALLOWED_FONT_SIZES.join(", ")}.`),
+
+  body("preferences.reduceMotion")
+    .optional()
+    .isBoolean()
+    .withMessage("reduceMotion must be a boolean.")
+    .toBoolean(),
+
+  body("preferences.compactMode")
+    .optional()
+    .isBoolean()
+    .withMessage("compactMode must be a boolean.")
+    .toBoolean(),
 
   body("preferences.privacy")
     .optional()
