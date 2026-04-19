@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "seed:admin": "node seed/adminSeed.js"
+    "seed:admin": "node seed/adminSeed.js",
+    "seed:demo": "node seed/demoSeed.js"
   },
   "engines": {
     "node": ">=20"
