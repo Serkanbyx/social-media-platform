@@ -46,6 +46,7 @@ export const MAX_COMMENT = 500;
  * pickers and the attachment picker.
  * --------------------------------------------------------------------*/
 export const MAX_AVATAR_MB = 5;
+export const MAX_BANNER_MB = 5;
 export const MAX_POST_IMAGE_MB = 5;
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",

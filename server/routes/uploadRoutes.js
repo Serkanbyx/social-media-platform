@@ -3,8 +3,13 @@ import { Router } from "express";
 import {
   uploadAvatar as uploadAvatarController,
   deleteAvatar as deleteAvatarController,
+  uploadBanner as uploadBannerController,
+  deleteBanner as deleteBannerController,
 } from "../controllers/uploadController.js";
-import { uploadAvatar as uploadAvatarMulter } from "../middleware/upload.js";
+import {
+  uploadAvatar as uploadAvatarMulter,
+  uploadBanner as uploadBannerMulter,
+} from "../middleware/upload.js";
 import protect from "../middleware/auth.js";
 import { writeLimiter } from "../middleware/rateLimiters.js";
 
@@ -28,5 +33,18 @@ router.post(
 // Owner-only avatar removal. Same protect + write-limiter pair as the
 // upload route; no multer needed because there's no body to parse.
 router.delete("/avatar", protect, writeLimiter, deleteAvatarController);
+
+// POST /api/uploads/banner — owner-only profile cover image upload.
+// Same middleware order as the avatar upload route.
+router.post(
+  "/banner",
+  protect,
+  writeLimiter,
+  uploadBannerMulter,
+  uploadBannerController
+);
+
+// DELETE /api/uploads/banner — owner-only profile cover image removal.
+router.delete("/banner", protect, writeLimiter, deleteBannerController);
 
 export default router;

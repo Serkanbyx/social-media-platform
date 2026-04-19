@@ -18,3 +18,13 @@ export const deleteAvatar = async () => {
   const { data } = await api.delete("/uploads/avatar");
   return data;
 };
+
+export const uploadBanner = async (formData, options = {}) => {
+  const { data } = await api.post("/uploads/banner", formData, options);
+  return data;
+};
+
+export const deleteBanner = async () => {
+  const { data } = await api.delete("/uploads/banner");
+  return data;
+};

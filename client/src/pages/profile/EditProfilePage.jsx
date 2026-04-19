@@ -36,6 +36,7 @@ import * as userService from "../../services/userService.js";
 import {
   ALLOWED_IMAGE_TYPES,
   MAX_AVATAR_MB,
+  MAX_BANNER_MB,
   MAX_BIO,
   MAX_NAME,
   MAX_USERNAME,
@@ -156,6 +157,18 @@ function EditProfileForm({ user, updateUser, navigate }) {
   const [removing, setRemoving] = useState(false);
   const [photoSuccess, setPhotoSuccess] = useState(false);
 
+  // ---------- Banner section state (mirror of the photo section) ----------
+  const bannerFileInputRef = useRef(null);
+  const bannerPreviewUrlRef = useRef("");
+
+  const [bannerSelectedFile, setBannerSelectedFile] = useState(null);
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState("");
+  const [bannerError, setBannerError] = useState("");
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [bannerUploadProgress, setBannerUploadProgress] = useState(0);
+  const [bannerRemoving, setBannerRemoving] = useState(false);
+  const [bannerSuccess, setBannerSuccess] = useState(false);
+
   // ---------- Profile info state ----------
   const [form, setForm] = useState(() => initialFormFromUser(user));
   const [errors, setErrors] = useState({ name: "", username: "", bio: "" });
@@ -171,6 +184,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
       if (previewUrlRef.current) {
         URL.revokeObjectURL(previewUrlRef.current);
         previewUrlRef.current = "";
+      }
+      if (bannerPreviewUrlRef.current) {
+        URL.revokeObjectURL(bannerPreviewUrlRef.current);
+        bannerPreviewUrlRef.current = "";
       }
     },
     []
@@ -273,6 +290,107 @@ function EditProfileForm({ user, updateUser, navigate }) {
       notify.error(message);
     } finally {
       setRemoving(false);
+    }
+  };
+
+  // ---------- Banner handlers ----------
+  const setBannerPreviewFromFile = useCallback((file) => {
+    if (bannerPreviewUrlRef.current) {
+      URL.revokeObjectURL(bannerPreviewUrlRef.current);
+      bannerPreviewUrlRef.current = "";
+    }
+    if (!file) {
+      setBannerPreviewUrl("");
+      setBannerSelectedFile(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    bannerPreviewUrlRef.current = url;
+    setBannerPreviewUrl(url);
+    setBannerSelectedFile(file);
+  }, []);
+
+  const onPickBanner = () => bannerFileInputRef.current?.click();
+
+  const onBannerFileChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setBannerError("Only JPG, PNG, WEBP or GIF formats are supported.");
+      return;
+    }
+    const maxBytes = MAX_BANNER_MB * 1024 * 1024;
+    if (file.size > maxBytes) {
+      setBannerError(`Image is too large (max ${MAX_BANNER_MB} MB).`);
+      return;
+    }
+
+    setBannerError("");
+    setBannerPreviewFromFile(file);
+  };
+
+  const cancelBannerPreview = () => {
+    setBannerPreviewFromFile(null);
+    setBannerError("");
+    setBannerUploadProgress(0);
+  };
+
+  const saveBanner = async () => {
+    if (!bannerSelectedFile || bannerUploading) return;
+    setBannerUploading(true);
+    setBannerUploadProgress(0);
+    setBannerError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("banner", bannerSelectedFile);
+
+      const data = await uploadService.uploadBanner(formData, {
+        onUploadProgress: (event) => {
+          if (!event?.total) return;
+          setBannerUploadProgress(
+            Math.min(100, Math.round((event.loaded * 100) / event.total))
+          );
+        },
+      });
+
+      const nextBanner = data?.banner || { url: "", publicId: "" };
+      updateUser({ banner: nextBanner });
+
+      setBannerPreviewFromFile(null);
+      setBannerSuccess(true);
+      window.setTimeout(() => setBannerSuccess(false), 320);
+
+      notify.success("Profile banner updated.");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message || "Couldn't upload banner.";
+      setBannerError(message);
+      notify.error(message);
+    } finally {
+      setBannerUploading(false);
+      setBannerUploadProgress(0);
+    }
+  };
+
+  const removeBanner = async () => {
+    if (bannerRemoving || !user.banner?.url) return;
+    setBannerRemoving(true);
+    setBannerError("");
+    try {
+      await uploadService.deleteBanner();
+      updateUser({ banner: { url: "", publicId: "" } });
+      setBannerPreviewFromFile(null);
+      notify.success("Profile banner removed.");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message || "Couldn't remove banner.";
+      setBannerError(message);
+      notify.error(message);
+    } finally {
+      setBannerRemoving(false);
     }
   };
 
@@ -405,7 +523,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
     await performSave();
   };
 
-  const dirty = infoDirty || Boolean(selectedFile);
+  const dirty = infoDirty || Boolean(selectedFile) || Boolean(bannerSelectedFile);
   const unsaved = useUnsavedChangesPrompt(dirty);
 
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -421,6 +539,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
 
   const confirmCancel = () => {
     setPreviewFromFile(null);
+    setBannerPreviewFromFile(null);
     setForm(initialFormFromUser(user));
     setErrors({ name: "", username: "", bio: "" });
     setCancelOpen(false);
@@ -429,6 +548,8 @@ function EditProfileForm({ user, updateUser, navigate }) {
 
   const hasAvatar = Boolean(user.avatar?.url);
   const showingPreview = Boolean(selectedFile);
+  const hasBanner = Boolean(user.banner?.url);
+  const showingBannerPreview = Boolean(bannerSelectedFile);
 
   return (
     <>
@@ -463,6 +584,144 @@ function EditProfileForm({ user, updateUser, navigate }) {
             </Button>
           </div>
         </header>
+
+        {/* ----- Section: Profile banner ----- */}
+        <Card padding="lg" as="section" aria-labelledby="banner-heading">
+          <h2
+            id="banner-heading"
+            className="text-base font-semibold text-zinc-900 dark:text-zinc-50"
+          >
+            Profile banner
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Recommended 1500×500 · JPG, PNG, WEBP or GIF · max {MAX_BANNER_MB} MB.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            <div className="relative w-full">
+              <div
+                className={cn(
+                  "relative aspect-[3/1] w-full overflow-hidden rounded-xl ring-1 ring-zinc-200 dark:ring-zinc-800",
+                  !showingBannerPreview && !hasBanner &&
+                    "bg-gradient-to-br from-brand-500 to-brand-700"
+                )}
+              >
+                {!showingBannerPreview && hasBanner && (
+                  <img
+                    src={user.banner.url}
+                    alt="Current profile banner"
+                    className="size-full object-cover"
+                  />
+                )}
+                {showingBannerPreview && bannerPreviewUrl && (
+                  <img
+                    src={bannerPreviewUrl}
+                    alt="New banner preview"
+                    className="size-full object-cover"
+                  />
+                )}
+              </div>
+
+              {bannerUploading && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center rounded-xl bg-zinc-950/40 backdrop-blur-[1px]"
+                  aria-hidden="true"
+                >
+                  <Spinner size="md" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {showingBannerPreview ? (
+                <>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={saveBanner}
+                    loading={bannerUploading}
+                    leftIcon={bannerSuccess ? Check : undefined}
+                    disabled={bannerUploading}
+                  >
+                    {bannerSuccess
+                      ? "Saved"
+                      : bannerUploading
+                        ? "Uploading…"
+                        : "Save"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={cancelBannerPreview}
+                    disabled={bannerUploading}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    leftIcon={ImageUp}
+                    onClick={onPickBanner}
+                    disabled={bannerRemoving}
+                  >
+                    {hasBanner ? "Change banner" : "Upload banner"}
+                  </Button>
+                  {hasBanner && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      leftIcon={Trash2}
+                      onClick={removeBanner}
+                      loading={bannerRemoving}
+                      disabled={bannerRemoving}
+                      className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {bannerUploading && (
+              <div
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={bannerUploadProgress}
+                aria-label="Banner upload progress"
+                className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+              >
+                <div
+                  className="h-full bg-brand-500 transition-[width] duration-base"
+                  style={{ width: `${bannerUploadProgress}%` }}
+                />
+              </div>
+            )}
+
+            {bannerError && (
+              <p
+                role="alert"
+                className="text-xs font-medium text-rose-600 dark:text-rose-400"
+              >
+                {bannerError}
+              </p>
+            )}
+          </div>
+
+          <input
+            ref={bannerFileInputRef}
+            type="file"
+            accept={ALLOWED_IMAGE_TYPES.join(",")}
+            onChange={onBannerFileChange}
+            className="hidden"
+            tabIndex={-1}
+            aria-label="Choose profile banner"
+          />
+        </Card>
 
         {/* ----- Section 1: Profile photo ----- */}
         <Card padding="lg" as="section" aria-labelledby="photo-heading">

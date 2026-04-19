@@ -75,9 +75,12 @@ export default function NotificationsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 1.5s after items first arrive, mark everything read in the
-  // background. We only fire this once per page visit so navigating
-  // back doesn't re-trigger a no-op call.
+  // Shortly after items first arrive, mark everything read in the
+  // background so the navbar/tab badge clears as soon as the user
+  // lands on the page. The 400ms delay lets the highlighted "unread"
+  // background paint at least one frame so users still get a visual
+  // cue for what's new (the per-item `wasInitiallyUnread` snapshot
+  // keeps that highlight pinned for the rest of the page session).
   useEffect(() => {
     if (autoMarkFiredRef.current) return undefined;
     if (loading) return undefined;
@@ -90,7 +93,7 @@ export default function NotificationsPage() {
     const handle = window.setTimeout(() => {
       autoMarkFiredRef.current = true;
       markAllRead().catch(() => {});
-    }, 1500);
+    }, 400);
 
     return () => window.clearTimeout(handle);
   }, [items.length, loading, unreadCount, markAllRead]);

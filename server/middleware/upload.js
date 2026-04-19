@@ -76,6 +76,7 @@ const wrapSingle = (fieldName) => {
 };
 
 export const uploadAvatar = wrapSingle("avatar");
+export const uploadBanner = wrapSingle("banner");
 export const uploadPostImage = wrapSingle("image");
 
-export default { uploadAvatar, uploadPostImage };
+export default { uploadAvatar, uploadBanner, uploadPostImage };

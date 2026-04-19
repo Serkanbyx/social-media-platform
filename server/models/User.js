@@ -16,6 +16,19 @@ const avatarSchema = new Schema(
   { _id: false }
 );
 
+// `bannerSchema` mirrors `avatarSchema` so the same Cloudinary asset
+// shape can be reused for the profile cover image. Keeping them as
+// separate sub-documents (rather than reusing the avatar one) lets us
+// evolve banner-only fields later (e.g. focal point, dominant colour)
+// without dragging the avatar shape along.
+const bannerSchema = new Schema(
+  {
+    url: { type: String, default: "", trim: true },
+    publicId: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
 const preferencesSchema = new Schema(
   {
     theme: {
@@ -103,6 +116,10 @@ const userSchema = new Schema(
       type: avatarSchema,
       default: () => ({ url: "", publicId: "" }),
     },
+    banner: {
+      type: bannerSchema,
+      default: () => ({ url: "", publicId: "" }),
+    },
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -162,6 +179,9 @@ userSchema.methods.toPublicProfile = function toPublicProfile({ viewerId } = {})
     bio: this.bio,
     avatar: this.avatar
       ? { url: this.avatar.url || "", publicId: this.avatar.publicId || "" }
+      : { url: "", publicId: "" },
+    banner: this.banner
+      ? { url: this.banner.url || "", publicId: this.banner.publicId || "" }
       : { url: "", publicId: "" },
     role: this.role,
     followersCount: this.followersCount,

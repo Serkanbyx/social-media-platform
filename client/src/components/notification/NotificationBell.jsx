@@ -105,14 +105,22 @@ function ConnectionDot() {
   );
 }
 
-function MiniListItem({ notification, onClose }) {
+function MiniListItem({ notification, onClose, onMarkRead }) {
   const sender = notification.sender || {};
   const senderName = sender.name || sender.username || "Someone";
+
+  const handleClick = () => {
+    if (!notification.isRead) {
+      onMarkRead?.(notification._id);
+    }
+    onClose?.();
+  };
+
   return (
     <li>
       <Link
         to={linkForNotification(notification)}
-        onClick={onClose}
+        onClick={handleClick}
         className={cn(
           "flex items-start gap-2.5 px-3 py-2.5 transition-colors duration-fast",
           notification.isRead
@@ -143,7 +151,7 @@ function MiniListItem({ notification, onClose }) {
 }
 
 function PopoverContent({ onClose }) {
-  const { items, unreadCount, loading, loadMore, markAllRead } =
+  const { items, unreadCount, loading, loadMore, markAllRead, markRead } =
     useNotifications();
 
   // Lazy-load the first page when the popover opens for the first time
@@ -152,6 +160,21 @@ function PopoverContent({ onClose }) {
     if (items.length === 0 && !loading) {
       loadMore();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto mark-all-as-read shortly after the popover opens so the bell
+  // badge clears as soon as the user has acknowledged the activity.
+  // The short 800ms delay leaves time for the highlighted "unread"
+  // background to register before items become visually neutral.
+  useEffect(() => {
+    if (unreadCount === 0) return undefined;
+    const handle = window.setTimeout(() => {
+      markAllRead().catch(() => {});
+    }, 800);
+    return () => window.clearTimeout(handle);
+    // We intentionally only fire this on first mount — re-running on
+    // every count change would re-trigger after fresh socket events.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -201,6 +224,9 @@ function PopoverContent({ onClose }) {
               key={n._id}
               notification={n}
               onClose={onClose}
+              onMarkRead={(id) => {
+                markRead(id).catch(() => {});
+              }}
             />
           ))}
         </ul>

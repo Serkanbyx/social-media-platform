@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -133,10 +133,19 @@ function SearchResults({ query, results, loading, onPick }) {
   );
 }
 
-function SearchPopover({ open, onClose, fullScreen = false }) {
+function SearchPopover({
+  open,
+  onClose,
+  fullScreen = false,
+  externalQuery,
+}) {
   if (!open) return null;
   return (
-    <SearchPopoverInner onClose={onClose} fullScreen={fullScreen} />
+    <SearchPopoverInner
+      onClose={onClose}
+      fullScreen={fullScreen}
+      externalQuery={externalQuery}
+    />
   );
 }
 
@@ -145,17 +154,26 @@ function SearchPopover({ open, onClose, fullScreen = false }) {
  * fresh each time the popover is opened and discarded on close — no
  * manual reset effects needed (which would also trip the
  * `react-hooks/set-state-in-effect` rule).
+ *
+ * Two modes:
+ *  - Fullscreen (mobile): owns its own input + query state.
+ *  - Desktop (`externalQuery` provided): the navbar input is the source
+ *    of truth; the popover only renders the result list and reacts to
+ *    changes from the parent.
  */
-function SearchPopoverInner({ onClose, fullScreen }) {
-  const [query, setQuery] = useState("");
+function SearchPopoverInner({ onClose, fullScreen, externalQuery }) {
+  const isControlled = typeof externalQuery === "string";
+  const [internalQuery, setInternalQuery] = useState("");
+  const query = isControlled ? externalQuery : internalQuery;
+
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const debouncedQuery = useDebounce(query, SEARCH_DEBOUNCE_MS);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!isControlled) inputRef.current?.focus();
+  }, [isControlled]);
 
   useEffect(() => {
     const term = debouncedQuery.trim();
@@ -202,7 +220,7 @@ function SearchPopoverInner({ onClose, fullScreen }) {
             ref={inputRef}
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => setInternalQuery(e.target.value)}
             placeholder="Search users…"
             className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
           />
@@ -381,7 +399,16 @@ export default function Navbar() {
   const navigate = useNavigate();
   const searchWrapperRef = useRef(null);
   const [desktopSearchOpen, setDesktopSearchOpen] = useState(false);
+  const [desktopSearchQuery, setDesktopSearchQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  // Close the desktop search popover and clear the input when navigating
+  // to a result so the next time the user focuses the field they start
+  // from a clean slate.
+  const closeDesktopSearch = useCallback(() => {
+    setDesktopSearchOpen(false);
+    setDesktopSearchQuery("");
+  }, []);
 
   useEffect(() => {
     if (!desktopSearchOpen) return undefined;
@@ -462,15 +489,20 @@ export default function Navbar() {
               />
               <input
                 type="search"
+                value={desktopSearchQuery}
                 onFocus={() => setDesktopSearchOpen(true)}
+                onChange={(e) => {
+                  setDesktopSearchQuery(e.target.value);
+                  setDesktopSearchOpen(true);
+                }}
                 placeholder="Search users…"
                 aria-label="Search users"
                 className="w-full rounded-full border border-zinc-200 bg-zinc-50 py-1.5 pl-9 pr-3 text-sm placeholder:text-zinc-400 transition-colors duration-fast focus:border-brand-300 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:focus:border-brand-700 dark:focus:bg-zinc-900"
-                onChange={() => setDesktopSearchOpen(true)}
               />
               <SearchPopover
                 open={desktopSearchOpen}
-                onClose={() => setDesktopSearchOpen(false)}
+                onClose={closeDesktopSearch}
+                externalQuery={desktopSearchQuery}
               />
             </div>
 

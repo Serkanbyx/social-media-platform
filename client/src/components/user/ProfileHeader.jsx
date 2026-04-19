@@ -128,15 +128,28 @@ function ProfileHeader({
         className
       )}
     >
-      {/* Cover banner — pure decoration today, placeholder for future
-          cover-image feature so adding one later won't reflow anything. */}
+      {/* Cover banner — falls back to a brand gradient when the user
+          hasn't uploaded a custom image yet. The wrapper height is the
+          same in both cases so the avatar offset and layout below stay
+          consistent regardless of whether a banner is present. */}
       <div
-        aria-hidden="true"
+        aria-hidden={profile.banner?.url ? undefined : "true"}
         className={cn(
-          "h-32 w-full rounded-b-2xl bg-gradient-to-br from-brand-500 to-brand-700 sm:h-48",
-          "shadow-xs"
+          "relative h-32 w-full overflow-hidden rounded-b-2xl shadow-xs sm:h-48",
+          !profile.banner?.url &&
+            "bg-gradient-to-br from-brand-500 to-brand-700"
         )}
-      />
+      >
+        {profile.banner?.url && (
+          <img
+            src={profile.banner.url}
+            alt={`${displayName} cover image`}
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover"
+          />
+        )}
+      </div>
 
       <div className="px-1 sm:px-2">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

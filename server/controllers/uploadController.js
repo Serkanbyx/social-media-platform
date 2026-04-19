@@ -5,6 +5,7 @@ import { uploadBuffer, destroyByPublicId } from "../config/cloudinary.js";
 // risks touching post images, and we can apply per-folder transformation
 // presets later (e.g. face-cropped thumbnails) without code changes here.
 const AVATAR_FOLDER = "social/avatars";
+const BANNER_FOLDER = "social/banners";
 
 // POST /api/uploads/avatar
 // Streams the in-memory file buffer to Cloudinary, swaps the user's avatar
@@ -65,4 +66,57 @@ export const deleteAvatar = asyncHandler(async (req, res) => {
   });
 });
 
-export default { uploadAvatar, deleteAvatar };
+// POST /api/uploads/banner
+// Same shape as the avatar upload, namespaced to a different Cloudinary
+// folder so banner-only transformations / cleanup never touch avatars.
+export const uploadBanner = asyncHandler(async (req, res) => {
+  if (!req.file?.buffer) {
+    return res.status(400).json({
+      status: "error",
+      message: "An image file is required (field name: \"banner\").",
+    });
+  }
+
+  const previousPublicId = req.user.banner?.publicId || "";
+
+  const result = await uploadBuffer(req.file.buffer, BANNER_FOLDER);
+
+  req.user.banner = {
+    url: result.secure_url,
+    publicId: result.public_id,
+  };
+
+  await req.user.save();
+
+  if (previousPublicId && previousPublicId !== result.public_id) {
+    await destroyByPublicId(previousPublicId);
+  }
+
+  return res.status(200).json({
+    status: "success",
+    banner: req.user.banner,
+  });
+});
+
+// DELETE /api/uploads/banner
+// Idempotent banner removal: clears the pointer and best-effort deletes
+// the underlying asset, returning an empty banner payload either way.
+export const deleteBanner = asyncHandler(async (req, res) => {
+  const previousPublicId = req.user.banner?.publicId || "";
+
+  if (req.user.banner?.url || previousPublicId) {
+    req.user.banner = { url: "", publicId: "" };
+    await req.user.save();
+  }
+
+  if (previousPublicId) {
+    await destroyByPublicId(previousPublicId);
+  }
+
+  return res.status(200).json({
+    status: "success",
+    banner: { url: "", publicId: "" },
+  });
+});
+
+export default { uploadAvatar, deleteAvatar, uploadBanner, deleteBanner };
