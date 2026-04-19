@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import { Link } from "react-router-dom";
@@ -64,44 +63,58 @@ export default function AdminComments() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryNonce, setRetryNonce] = useState(0);
 
-  const requestIdRef = useRef(0);
+  // Loading is derived from a request-key vs last-completed-key comparison
+  // instead of being set synchronously inside the effect — this avoids the
+  // "setState in effect body" anti-pattern (cascading renders) and makes
+  // request cancellation race-free via a simple `ignore` flag.
+  const requestKey = `${debouncedSearch}|${page}|${retryNonce}`;
+  const [completedKey, setCompletedKey] = useState(null);
+  const loading = completedKey !== requestKey;
 
-  const fetchComments = useCallback(async () => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-    setLoading(true);
-    setError("");
-    try {
-      const data = await adminService.listAllComments({
+  const handleRetry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    adminService
+      .listAllComments({
         page,
         limit: ADMIN_PAGE_SIZE,
         q: debouncedSearch || undefined,
+      })
+      .then((data) => {
+        if (ignore) return;
+        setItems(Array.isArray(data?.items) ? data.items : []);
+        setTotal(typeof data?.total === "number" ? data.total : 0);
+        setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
+        setError("");
+        setCompletedKey(requestKey);
+      })
+      .catch(() => {
+        if (ignore) return;
+        setError("Yorumlar yüklenemedi.");
+        setItems([]);
+        setTotal(0);
+        setTotalPages(1);
+        setCompletedKey(requestKey);
       });
-      if (requestIdRef.current !== requestId) return;
-      setItems(Array.isArray(data?.items) ? data.items : []);
-      setTotal(typeof data?.total === "number" ? data.total : 0);
-      setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
-    } catch {
-      if (requestIdRef.current !== requestId) return;
-      setError("Yorumlar yüklenemedi.");
-      setItems([]);
-      setTotal(0);
-      setTotalPages(1);
-    } finally {
-      if (requestIdRef.current === requestId) setLoading(false);
-    }
-  }, [debouncedSearch, page]);
 
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
+    return () => {
+      ignore = true;
+    };
+  }, [requestKey, debouncedSearch, page]);
 
-  useEffect(() => {
+  // Reset pagination when the search term changes. Done during render via
+  // the "store-previous-value" pattern (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+  // so we don't trigger an extra commit/effect cycle.
+  const [lastSearchForPage, setLastSearchForPage] = useState(debouncedSearch);
+  if (lastSearchForPage !== debouncedSearch) {
+    setLastSearchForPage(debouncedSearch);
     setPage(1);
-  }, [debouncedSearch]);
+  }
 
   const [pendingDelete, setPendingDelete] = useState(null);
   const closeDelete = useCallback(() => setPendingDelete(null), []);
@@ -136,7 +149,7 @@ export default function AdminComments() {
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           <span>{error}</span>
-          <Button variant="secondary" size="sm" onClick={fetchComments}>
+          <Button variant="secondary" size="sm" onClick={handleRetry}>
             Tekrar dene
           </Button>
         </div>

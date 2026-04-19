@@ -13,7 +13,7 @@ import Avatar from "../components/ui/Avatar.jsx";
 import { formatRelative } from "../utils/formatDate.js";
 import { useMediaQuery } from "../hooks/useMediaQuery.js";
 import { useAuth } from "./useAuth.js";
-import { useSocket } from "./SocketContext.jsx";
+import { useSocket } from "./useSocket.js";
 import {
   NotificationContext,
   linkForNotification,

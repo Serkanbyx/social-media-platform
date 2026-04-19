@@ -17,7 +17,7 @@ import PostCardSkeleton from "../../components/ui/skeletons/PostCardSkeleton.jsx
 import CreatePostForm from "../../components/post/CreatePostForm.jsx";
 import PostCard from "../../components/post/PostCard.jsx";
 
-import { useSocket } from "../../context/SocketContext.jsx";
+import { useSocket } from "../../context/useSocket.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 import useInfiniteScroll from "../../hooks/useInfiniteScroll.js";
 

@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { io } from "socket.io-client";
 
 import { useAuth } from "./useAuth.js";
+import { SocketContext } from "./useSocket.js";
 
 /**
  * SocketContext — opens a single, authenticated Socket.IO connection while
@@ -19,17 +20,12 @@ import { useAuth } from "./useAuth.js";
  *    multiple sockets.
  */
 
-const SocketContext = createContext(null);
-
 export function SocketProvider({ children }) {
   const { user, token } = useAuth();
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (!user || !token) {
-      setSocket(null);
-      return undefined;
-    }
+    if (!user || !token) return undefined;
 
     const url = import.meta.env.VITE_SOCKET_URL;
     if (!url) {
@@ -46,11 +42,19 @@ export function SocketProvider({ children }) {
       transports: ["websocket"],
     });
 
-    setSocket(instance);
+    // Subscribe to the external system (socket.io) and only mirror its
+    // state into React from event callbacks — this satisfies the
+    // "no synchronous setState in effect body" rule.
+    const handleConnect = () => setSocket(instance);
+    const handleDisconnect = () => setSocket(null);
+
+    instance.on("connect", handleConnect);
+    instance.on("disconnect", handleDisconnect);
 
     return () => {
+      instance.off("connect", handleConnect);
+      instance.off("disconnect", handleDisconnect);
       instance.disconnect();
-      setSocket(null);
     };
   }, [user, token]);
 
@@ -59,12 +63,4 @@ export function SocketProvider({ children }) {
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
-}
-
-export function useSocket() {
-  const ctx = useContext(SocketContext);
-  if (!ctx) {
-    throw new Error("useSocket must be used within a SocketProvider.");
-  }
-  return ctx;
 }

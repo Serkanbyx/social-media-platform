@@ -7,7 +7,7 @@ import Popover from "../ui/Popover.jsx";
 import { cn } from "../../utils/cn.js";
 import { formatRelative } from "../../utils/formatDate.js";
 import { useMediaQuery } from "../../hooks/useMediaQuery.js";
-import { useSocket } from "../../context/SocketContext.jsx";
+import { useSocket } from "../../context/useSocket.js";
 import {
   linkForNotification,
   sentenceFor,

@@ -518,7 +518,7 @@ export default function ExplorePage() {
                     <Badge
                       variant="brand"
                       size="sm"
-                      className="absolute left-3 top-3 z-10 shadow-sm"
+                      className="pointer-events-none absolute -top-2 right-3 z-10 shadow-sm"
                     >
                       <Flame
                         className="mr-1 size-3"
