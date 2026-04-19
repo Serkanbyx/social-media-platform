@@ -1,45 +1,15 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-
-import AdminLayout from "./components/layout/AdminLayout.jsx";
-import MainLayout from "./components/layout/MainLayout.jsx";
-import SettingsLayout from "./components/layout/SettingsLayout.jsx";
 
 import AdminRoute from "./components/guards/AdminRoute.jsx";
 import GuestOnlyRoute from "./components/guards/GuestOnlyRoute.jsx";
 import ProtectedRoute from "./components/guards/ProtectedRoute.jsx";
 
 import ErrorBoundary from "./components/ui/ErrorBoundary.jsx";
-
-import Login from "./pages/auth/Login.jsx";
-import Register from "./pages/auth/Register.jsx";
-
-import FeedPage from "./pages/feed/FeedPage.jsx";
-import ExplorePage from "./pages/explore/ExplorePage.jsx";
-
-import CreatePostPage from "./pages/post/CreatePostPage.jsx";
-import PostDetailPage from "./pages/post/PostDetailPage.jsx";
-
-import EditProfilePage from "./pages/profile/EditProfilePage.jsx";
-import FollowersPage from "./pages/profile/FollowersPage.jsx";
-import FollowingPage from "./pages/profile/FollowingPage.jsx";
-import ProfilePage from "./pages/profile/ProfilePage.jsx";
-
-import NotificationsPage from "./pages/notifications/NotificationsPage.jsx";
-
-import AccountSettings from "./pages/settings/AccountSettings.jsx";
-import AppearanceSettings from "./pages/settings/AppearanceSettings.jsx";
-import NotificationSettings from "./pages/settings/NotificationSettings.jsx";
-import PrivacySettings from "./pages/settings/PrivacySettings.jsx";
-
-import AdminComments from "./pages/admin/AdminComments.jsx";
-import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
-import AdminPosts from "./pages/admin/AdminPosts.jsx";
-import AdminUsers from "./pages/admin/AdminUsers.jsx";
-
-import NotFoundPage from "./pages/NotFoundPage.jsx";
+import Spinner from "./components/ui/Spinner.jsx";
 
 /**
- * Top-level route tree (STEP 23).
+ * Top-level route tree (STEP 23, refined in STEP 38).
  *
  * Layout strategy:
  *  - Auth pages render without any chrome (no navbar/footer) so the user
@@ -56,7 +26,65 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
  * Read-only public surfaces (post detail, public profile, explore) stay
  * outside `ProtectedRoute` so deep links keep working for unauthenticated
  * visitors.
+ *
+ * Performance: every page-level route is wrapped with `React.lazy`, and
+ * each layout is split into its own chunk. The initial JS bundle keeps
+ * only routing, guards, the error boundary and the spinner — anything
+ * the user actually navigates to is fetched on demand. A shared
+ * `<Suspense>` boundary renders a full-screen spinner while a chunk is
+ * being loaded so the layout doesn't flash empty content.
  */
+
+// Layouts — small but split out so changing the feed page doesn't
+// invalidate the cached settings/admin layout chunks.
+const MainLayout = lazy(() => import("./components/layout/MainLayout.jsx"));
+const SettingsLayout = lazy(
+  () => import("./components/layout/SettingsLayout.jsx")
+);
+const AdminLayout = lazy(() => import("./components/layout/AdminLayout.jsx"));
+
+// Auth — visited at most once per session, perfect lazy candidates.
+const Login = lazy(() => import("./pages/auth/Login.jsx"));
+const Register = lazy(() => import("./pages/auth/Register.jsx"));
+
+// Main app surfaces.
+const FeedPage = lazy(() => import("./pages/feed/FeedPage.jsx"));
+const ExplorePage = lazy(() => import("./pages/explore/ExplorePage.jsx"));
+const CreatePostPage = lazy(() => import("./pages/post/CreatePostPage.jsx"));
+const PostDetailPage = lazy(() => import("./pages/post/PostDetailPage.jsx"));
+const ProfilePage = lazy(() => import("./pages/profile/ProfilePage.jsx"));
+const FollowersPage = lazy(() => import("./pages/profile/FollowersPage.jsx"));
+const FollowingPage = lazy(() => import("./pages/profile/FollowingPage.jsx"));
+const EditProfilePage = lazy(
+  () => import("./pages/profile/EditProfilePage.jsx")
+);
+const NotificationsPage = lazy(
+  () => import("./pages/notifications/NotificationsPage.jsx")
+);
+
+// Settings — unlikely to be opened on the first visit, so isolating it
+// keeps the feed bundle lean.
+const AccountSettings = lazy(
+  () => import("./pages/settings/AccountSettings.jsx")
+);
+const AppearanceSettings = lazy(
+  () => import("./pages/settings/AppearanceSettings.jsx")
+);
+const NotificationSettings = lazy(
+  () => import("./pages/settings/NotificationSettings.jsx")
+);
+const PrivacySettings = lazy(
+  () => import("./pages/settings/PrivacySettings.jsx")
+);
+
+// Admin — only ever loaded for users with `role === 'admin'`.
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.jsx"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers.jsx"));
+const AdminPosts = lazy(() => import("./pages/admin/AdminPosts.jsx"));
+const AdminComments = lazy(() => import("./pages/admin/AdminComments.jsx"));
+
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
+
 export default function App() {
   // Re-key the boundary on pathname so a render-time crash on one
   // page doesn't keep the recovery card stuck in place after the user
@@ -65,7 +93,9 @@ export default function App() {
 
   return (
     <ErrorBoundary key={pathname}>
-      <AppRoutes />
+      <Suspense fallback={<Spinner fullScreen label="Sayfa yükleniyor" />}>
+        <AppRoutes />
+      </Suspense>
     </ErrorBoundary>
   );
 }
