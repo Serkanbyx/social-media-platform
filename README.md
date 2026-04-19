@@ -49,17 +49,115 @@ A full-stack social media platform built with the **MERN** stack (MongoDB, Expre
 
 ## Screenshots
 
-> Suggested capture order: Login → Feed → Post Detail → Profile → Notifications → Admin Dashboard. Never paste a screenshot that exposes a token in DevTools, a populated `localStorage`, or any real credential.
+A complete visual tour captured directly from the **[live deployment](https://social-media-platformm.netlify.app/)** — public surfaces first, then the authenticated experience.
 
-```
-docs/screenshots/
-├── 01-login.png            # Auth shell with branded illustration
-├── 02-feed.png             # Personalized timeline + composer
-├── 03-post-detail.png      # Post detail with comments thread
-├── 04-profile.png          # Public profile + follow button
-├── 05-notifications.png    # Real-time bell + dropdown
-└── 06-admin.png            # Admin dashboard stats
-```
+### Public Pages
+
+#### Landing Page
+
+The marketing entry point — clear value proposition, two primary CTAs, and a live preview of trending community posts.
+
+![Landing Page](docs/screenshots/01-landing.png)
+
+#### Explore — Trending Posts
+
+The public discovery feed available to everyone. Standout posts from the last 7 days are ranked with a `TRENDING #N` badge, posts include text and / or image, and each card exposes like / comment / share actions.
+
+![Explore Page](docs/screenshots/02-explore.png)
+
+#### Sign In
+
+Split-screen authentication shell with a branded gradient panel and an accessible form (labels, focus states, password strength hints).
+
+![Sign In Page](docs/screenshots/03-login.png)
+
+#### Create Account
+
+Registration form with real-time username / password validation and a live password-strength meter.
+
+![Register Page](docs/screenshots/04-register.png)
+
+#### Public Profile
+
+A user's public profile — cover banner, avatar, display name, bio, post / follower / following counts, and a clean post grid.
+
+![Profile Page](docs/screenshots/05-profile.png)
+
+#### Post Detail (Guest)
+
+The dedicated post page with full content, like and comment counts, timestamp, and a threaded comments section. Unauthenticated visitors see a friendly **Sign in to join the conversation** prompt instead of the composer.
+
+![Post Detail Page](docs/screenshots/06-post-detail.png)
+
+#### 404 — Not Found
+
+A polished error state that always offers a way back (`Back to feed` and `Explore` actions) instead of dead-ending the user.
+
+![404 Page](docs/screenshots/07-not-found.png)
+
+### Authenticated Experience
+
+#### Personalized Feed
+
+Once you follow people, your home feed is a clean reverse-chronological timeline of just their posts, with the inline composer at the top.
+
+![Authenticated Feed](docs/screenshots/08-feed.png)
+
+#### Inline Post Composer
+
+Click the composer to expand it. A live character counter (`/ 1000`), an image picker, an emoji picker, and a polls placeholder ship out of the box.
+
+![Composer](docs/screenshots/09-composer.png)
+
+#### Post Detail (Authenticated)
+
+Logged-in users see the full comment thread plus a `Write a comment…` textarea with its own `0 / 500` counter and `Comment` button — replacing the guest sign-in prompt.
+
+![Authenticated Post Detail](docs/screenshots/18-post-detail-auth.png)
+
+#### Notifications Dropdown
+
+A lightweight popover anchored to the bell icon — shows the latest events with `Mark all as read` and a `See all` link to the full notifications page. Real-time updates arrive over Socket.io.
+
+![Notifications Dropdown](docs/screenshots/10-notifications-dropdown.png)
+
+#### Account Menu
+
+The avatar in the top-right opens a tidy menu with quick access to your profile, settings, theme switcher, and sign-out.
+
+![Account Menu](docs/screenshots/11-account-menu.png)
+
+#### Your Own Profile
+
+The owner view of your profile — same layout as a public profile, but the `Follow` button is replaced by `Edit profile`.
+
+![My Profile](docs/screenshots/15-my-profile.png)
+
+#### Settings — Account
+
+Manage the email tied to your account and rotate your password with a live strength meter and double-confirm flow.
+
+![Settings · Account](docs/screenshots/12-settings-account.png)
+
+#### Settings — Appearance
+
+Pick **Light**, **Dark**, or **System** theme, scale the entire UI between **Small / Medium / Large** font sizes, and toggle a global **Reduce motion** switch for users sensitive to animation.
+
+![Settings · Appearance](docs/screenshots/13-settings-appearance.png)
+
+#### Settings — Privacy
+
+Switch your account to **Private**, decide whether to **Share email** on your public profile, and (coming soon) manage your blocked users list.
+
+![Settings · Privacy](docs/screenshots/17-settings-privacy.png)
+
+#### Settings — Notifications
+
+Granular toggles for in-app notifications: likes on your posts, comments on your posts, and new followers. Email notifications are flagged as `COMING SOON`.
+
+![Settings · Notifications](docs/screenshots/14-settings-notifications.png)
+
+> All screenshots were captured from the live Netlify deployment in dark mode at 1440 × 900. Authenticated views were captured from a freshly registered demo account that was deleted after capture.
 
 ---
 
