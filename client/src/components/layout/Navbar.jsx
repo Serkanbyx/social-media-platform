@@ -406,12 +406,15 @@ export default function Navbar() {
     navigate("/login", { replace: true });
   };
 
+  // Index route renders FeedPage for signed-in users and LandingPage for
+  // guests. Reflect that in the label so the desktop nav doesn't promise
+  // an "Akış" surface to a visitor who isn't actually signed in yet.
   const desktopNav = useMemo(
     () => [
-      { to: "/", label: "Akış", end: true },
+      { to: "/", label: user ? "Akış" : "Ana sayfa", end: true },
       { to: "/explore", label: "Keşfet" },
     ],
-    []
+    [user]
   );
 
   return (

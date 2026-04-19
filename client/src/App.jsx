@@ -8,6 +8,8 @@ import ProtectedRoute from "./components/guards/ProtectedRoute.jsx";
 import ErrorBoundary from "./components/ui/ErrorBoundary.jsx";
 import Spinner from "./components/ui/Spinner.jsx";
 
+import { useAuth } from "./context/AuthContext.jsx";
+
 /**
  * Top-level route tree (STEP 23, refined in STEP 38).
  *
@@ -48,6 +50,7 @@ const Login = lazy(() => import("./pages/auth/Login.jsx"));
 const Register = lazy(() => import("./pages/auth/Register.jsx"));
 
 // Main app surfaces.
+const LandingPage = lazy(() => import("./pages/landing/LandingPage.jsx"));
 const FeedPage = lazy(() => import("./pages/feed/FeedPage.jsx"));
 const ExplorePage = lazy(() => import("./pages/explore/ExplorePage.jsx"));
 const CreatePostPage = lazy(() => import("./pages/post/CreatePostPage.jsx"));
@@ -85,6 +88,23 @@ const AdminComments = lazy(() => import("./pages/admin/AdminComments.jsx"));
 
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
 
+/**
+ * HomeRoute — branches the index route on auth state instead of forcing
+ * unauthenticated visitors straight into `/login`. Signed-in users keep
+ * landing on the feed (the historical home), while guests see the
+ * marketing/preview landing page that doubles as a live tour of the
+ * product (trending posts grid + sign-up CTAs).
+ *
+ * While the auth bootstrap is in flight we render a full-screen spinner
+ * so a logged-in user does not get a brief flash of the landing page on
+ * a hard refresh before `getMe()` resolves.
+ */
+function HomeRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <Spinner fullScreen />;
+  return user ? <FeedPage /> : <LandingPage />;
+}
+
 export default function App() {
   // Re-key the boundary on pathname so a render-time crash on one
   // page doesn't keep the recovery card stuck in place after the user
@@ -109,14 +129,7 @@ function AppRoutes() {
       </Route>
 
       <Route element={<MainLayout />}>
-        <Route
-          index
-          element={
-            <ProtectedRoute>
-              <FeedPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route index element={<HomeRoute />} />
         <Route path="explore" element={<ExplorePage />} />
 
         <Route
