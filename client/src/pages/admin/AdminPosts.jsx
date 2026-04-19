@@ -4,8 +4,8 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
+  FileText,
   Heart,
-  ImageIcon,
   MessageCircle,
   MoreHorizontal,
   Newspaper,
@@ -346,13 +346,17 @@ export default function AdminPosts() {
 /* -------------------------------------------------------------------------- */
 
 function PostThumb({ url, alt }) {
+  // Text-only posts get a neutral document glyph instead of the broken-image
+  // looking placeholder; the latter made moderators think images had failed
+  // to load when they were never attached in the first place.
   if (!url) {
     return (
       <span
         aria-hidden="true"
-        className="inline-flex size-12 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500"
+        title="Text-only post"
+        className="inline-flex size-12 shrink-0 items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-500"
       >
-        <ImageIcon className="size-5" />
+        <FileText className="size-5" />
       </span>
     );
   }

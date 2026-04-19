@@ -21,7 +21,7 @@ import { useAuth } from "../../context/useAuth.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 
 import * as adminService from "../../services/adminService.js";
-import compactCount from "../../utils/formatCount.js";
+import compactCount, { pluralize } from "../../utils/formatCount.js";
 import { cn } from "../../utils/cn.js";
 
 /**
@@ -175,7 +175,11 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <header>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Welcome back, <span className="font-medium text-zinc-700 dark:text-zinc-200">{greetingName}</span>.
+          {"Welcome back, "}
+          <span className="font-medium text-zinc-700 dark:text-zinc-200">
+            {greetingName}
+          </span>
+          {"."}
         </p>
         <h2 className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           Overview
@@ -314,7 +318,7 @@ function TopUsersPanel({ users, loading }) {
                 </span>
               </Link>
               <span className="shrink-0 text-xs font-semibold text-zinc-700 tnum dark:text-zinc-200">
-                {compactCount(person.followersCount ?? 0)} followers
+                {pluralize(person.followersCount ?? 0, "follower")}
               </span>
             </li>
           ))}

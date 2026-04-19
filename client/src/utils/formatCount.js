@@ -27,4 +27,18 @@ export function compactCount(value) {
   return `${sign}${(abs / 1_000_000_000).toFixed(1)}B`;
 }
 
+/**
+ * pluralize — `${compactCount(value)} ${singular|plural}`.
+ *
+ * English-only pluralization helper that pairs a compact count with the
+ * correct word form ("1 follower" vs "2 followers"). Pass an explicit
+ * `plural` for irregular nouns; otherwise we default to `${singular}s`.
+ */
+export function pluralize(value, singular, plural) {
+  const num = Number(value);
+  const safe = Number.isFinite(num) ? num : 0;
+  const word = safe === 1 ? singular : plural || `${singular}s`;
+  return `${compactCount(safe)} ${word}`;
+}
+
 export default compactCount;

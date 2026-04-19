@@ -76,7 +76,7 @@ export default function AdminLayout() {
         <div className="flex flex-col">
           <nav
             aria-label="Admin navigation (mobile)"
-            className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-4 lg:hidden"
+            className="sticky top-14 z-20 -mx-4 flex gap-2 overflow-x-auto border-b border-zinc-200 bg-white/85 px-4 py-3 backdrop-blur lg:hidden dark:border-zinc-800 dark:bg-zinc-950/85"
           >
             {NAV.map(({ to, label, end }) => (
               <NavLink key={to} to={to} end={end} className={mobileItemClass}>

@@ -174,51 +174,69 @@ export default function AdminUsers() {
     );
   }, []);
 
-  const handleRoleChange = useCallback(
-    async (target, nextRole) => {
-      if (!target || target.role === nextRole) return;
+  // Role / status changes are persisted only after a confirm step. This
+  // protects against the "menu fat-finger" failure where one stray click
+  // would otherwise instantly promote, demote, disable or re-enable an
+  // account. Optimistic UI still applies *after* the user confirms.
+  const [pendingRoleChange, setPendingRoleChange] = useState(null);
+  const closeRoleChange = useCallback(() => setPendingRoleChange(null), []);
 
-      const previousRole = target.role;
-      updateLocalUser(target._id, { role: nextRole });
-      try {
-        await adminService.updateUserRole(target._id, nextRole);
-        notify.success(
-          nextRole === "admin"
-            ? `@${target.username} promoted to admin.`
-            : `@${target.username} changed to user.`
-        );
-      } catch (err) {
-        updateLocalUser(target._id, { role: previousRole });
-        const message =
-          err?.response?.data?.message || "Couldn't change role.";
-        notify.error(message);
-      }
-    },
-    [updateLocalUser]
-  );
+  const requestRoleChange = useCallback((target, nextRole) => {
+    if (!target || target.role === nextRole) return;
+    setPendingRoleChange({ target, nextRole });
+  }, []);
 
-  const handleActiveToggle = useCallback(
-    async (target, nextActive) => {
-      if (!target || target.isActive === nextActive) return;
+  const handleConfirmRoleChange = useCallback(async () => {
+    if (!pendingRoleChange) return;
+    const { target, nextRole } = pendingRoleChange;
+    const previousRole = target.role;
+    updateLocalUser(target._id, { role: nextRole });
+    try {
+      await adminService.updateUserRole(target._id, nextRole);
+      notify.success(
+        nextRole === "admin"
+          ? `@${target.username} promoted to admin.`
+          : `@${target.username} changed to user.`
+      );
+    } catch (err) {
+      updateLocalUser(target._id, { role: previousRole });
+      const message =
+        err?.response?.data?.message || "Couldn't change role.";
+      notify.error(message);
+    } finally {
+      closeRoleChange();
+    }
+  }, [closeRoleChange, pendingRoleChange, updateLocalUser]);
 
-      const previousActive = target.isActive;
-      updateLocalUser(target._id, { isActive: nextActive });
-      try {
-        await adminService.setUserActive(target._id, nextActive);
-        notify.success(
-          nextActive
-            ? `@${target.username} re-enabled.`
-            : `@${target.username} disabled.`
-        );
-      } catch (err) {
-        updateLocalUser(target._id, { isActive: previousActive });
-        const message =
-          err?.response?.data?.message || "Couldn't change account status.";
-        notify.error(message);
-      }
-    },
-    [updateLocalUser]
-  );
+  const [pendingActiveToggle, setPendingActiveToggle] = useState(null);
+  const closeActiveToggle = useCallback(() => setPendingActiveToggle(null), []);
+
+  const requestActiveToggle = useCallback((target, nextActive) => {
+    if (!target || target.isActive === nextActive) return;
+    setPendingActiveToggle({ target, nextActive });
+  }, []);
+
+  const handleConfirmActiveToggle = useCallback(async () => {
+    if (!pendingActiveToggle) return;
+    const { target, nextActive } = pendingActiveToggle;
+    const previousActive = target.isActive;
+    updateLocalUser(target._id, { isActive: nextActive });
+    try {
+      await adminService.setUserActive(target._id, nextActive);
+      notify.success(
+        nextActive
+          ? `@${target.username} re-enabled.`
+          : `@${target.username} disabled.`
+      );
+    } catch (err) {
+      updateLocalUser(target._id, { isActive: previousActive });
+      const message =
+        err?.response?.data?.message || "Couldn't change account status.";
+      notify.error(message);
+    } finally {
+      closeActiveToggle();
+    }
+  }, [closeActiveToggle, pendingActiveToggle, updateLocalUser]);
 
   // ---------- Delete confirmation ----------
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -343,8 +361,8 @@ export default function AdminUsers() {
                       row={row}
                       viewerId={viewerId}
                       activeAdminCount={activeAdminCount}
-                      onRoleChange={handleRoleChange}
-                      onActiveToggle={handleActiveToggle}
+                      onRoleChange={requestRoleChange}
+                      onActiveToggle={requestActiveToggle}
                       onDelete={(target) => setPendingDelete(target)}
                     />
                   ))
@@ -399,8 +417,8 @@ export default function AdminUsers() {
                     row={row}
                     viewerId={viewerId}
                     activeAdminCount={activeAdminCount}
-                    onRoleChange={handleRoleChange}
-                    onActiveToggle={handleActiveToggle}
+                    onRoleChange={requestRoleChange}
+                    onActiveToggle={requestActiveToggle}
                     onDelete={(target) => setPendingDelete(target)}
                   />
                 ))}
@@ -416,6 +434,54 @@ export default function AdminUsers() {
         total={total}
         loading={loading}
         onPageChange={(next) => setPage(next)}
+      />
+
+      <ConfirmModal
+        open={Boolean(pendingRoleChange)}
+        title={
+          pendingRoleChange?.nextRole === "admin"
+            ? "Promote to admin"
+            : "Revoke admin access"
+        }
+        description={
+          pendingRoleChange
+            ? pendingRoleChange.nextRole === "admin"
+              ? `Grant administrator privileges to @${pendingRoleChange.target.username}? They'll be able to moderate users, posts and comments.`
+              : `Revoke administrator privileges from @${pendingRoleChange.target.username}? They'll lose access to the admin panel.`
+            : ""
+        }
+        confirmLabel={
+          pendingRoleChange?.nextRole === "admin" ? "Make admin" : "Revoke admin"
+        }
+        cancelLabel="Cancel"
+        busyLabel="Saving…"
+        danger={pendingRoleChange?.nextRole !== "admin"}
+        onConfirm={handleConfirmRoleChange}
+        onCancel={closeRoleChange}
+      />
+
+      <ConfirmModal
+        open={Boolean(pendingActiveToggle)}
+        title={
+          pendingActiveToggle?.nextActive
+            ? "Re-enable account"
+            : "Disable account"
+        }
+        description={
+          pendingActiveToggle
+            ? pendingActiveToggle.nextActive
+              ? `Re-enable @${pendingActiveToggle.target.username}? They'll regain access to sign in and post.`
+              : `Disable @${pendingActiveToggle.target.username}? They won't be able to sign in until you re-enable the account.`
+            : ""
+        }
+        confirmLabel={
+          pendingActiveToggle?.nextActive ? "Re-enable" : "Disable account"
+        }
+        cancelLabel="Cancel"
+        busyLabel="Saving…"
+        danger={pendingActiveToggle?.nextActive === false}
+        onConfirm={handleConfirmActiveToggle}
+        onCancel={closeActiveToggle}
       />
 
       <ConfirmModal
