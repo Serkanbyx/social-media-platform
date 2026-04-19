@@ -22,6 +22,7 @@ import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 import useInfiniteScroll from "../../hooks/useInfiniteScroll.js";
 
 import * as feedService from "../../services/feedService.js";
+import { FEED_PAGE_LIMIT } from "../../utils/constants.js";
 
 /**
  * FeedPage — single-column timeline at `max-w-2xl mx-auto` (STEP 28).
@@ -48,7 +49,6 @@ import * as feedService from "../../services/feedService.js";
  * it is a viable LCP candidate; PostCard is memoized upstream.
  */
 
-const PAGE_SIZE = 10;
 const SKELETON_COUNT = 4;
 
 // Defensive shape check for socket payloads. Anything we surface to the
@@ -86,7 +86,7 @@ export default function FeedPage() {
     setInitialLoading(true);
     setError("");
     try {
-      const data = await feedService.getFeed({ limit: PAGE_SIZE });
+      const data = await feedService.getFeed({ limit: FEED_PAGE_LIMIT });
       setItems(Array.isArray(data?.items) ? data.items : []);
       setNextCursor(data?.nextCursor || null);
       setHasMore(Boolean(data?.hasMore));
@@ -109,7 +109,7 @@ export default function FeedPage() {
     try {
       const data = await feedService.getFeed({
         cursor: nextCursor,
-        limit: PAGE_SIZE,
+        limit: FEED_PAGE_LIMIT,
       });
       const incoming = Array.isArray(data?.items) ? data.items : [];
       setItems((prev) => {

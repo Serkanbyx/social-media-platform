@@ -28,6 +28,7 @@ import useInfiniteScroll from "../../hooks/useInfiniteScroll.js";
 
 import * as postService from "../../services/postService.js";
 import * as userService from "../../services/userService.js";
+import { EXPLORE_PAGE_LIMIT } from "../../utils/constants.js";
 
 /**
  * ExplorePage — public discovery surface (STEP 29).
@@ -62,7 +63,6 @@ import * as userService from "../../services/userService.js";
 
 const SEARCH_DEBOUNCE_MS = 400;
 const MAX_QUERY_LENGTH = 80;
-const PAGE_SIZE = 12;
 const PEOPLE_PREVIEW_COUNT = 5;
 const GRID_SKELETON_COUNT = 8;
 const LIST_SKELETON_COUNT = 4;
@@ -156,7 +156,7 @@ export default function ExplorePage() {
 
     try {
       const data = await postService.explorePosts({
-        limit: PAGE_SIZE,
+        limit: EXPLORE_PAGE_LIMIT,
         q: activeQuery || undefined,
       });
       if (requestIdRef.current !== requestId) return;
@@ -186,7 +186,7 @@ export default function ExplorePage() {
     try {
       const data = await postService.explorePosts({
         cursor: nextCursor,
-        limit: PAGE_SIZE,
+        limit: EXPLORE_PAGE_LIMIT,
         q: activeQuery || undefined,
       });
       const incoming = Array.isArray(data?.items) ? data.items : [];

@@ -10,11 +10,19 @@
 export const DEFAULT_PAGE_LIMIT = 20;
 export const MAX_PAGE_LIMIT = 50;
 
-export const FEED_PAGE_LIMIT = 20;
-export const EXPLORE_PAGE_LIMIT = 24;
+// Per-surface page sizes — kept identical to the server-side defaults in
+// the matching validators so the client sends the same number the API
+// would have applied anyway. Adjust both sides together if these move.
+//   - feed:           server default 10, max 20  (feedValidator)
+//   - explore/posts:  server default 12, max 30  (postValidator)
+//   - comments:       server default 20, max 50  (commentValidator)
+//   - notifications:  server default 20, max 50  (notificationValidator)
+//   - follow lists:   server default 20, max 50  (userValidator)
+export const FEED_PAGE_LIMIT = 10;
+export const EXPLORE_PAGE_LIMIT = 12;
 export const COMMENTS_PAGE_LIMIT = 20;
 export const NOTIFICATIONS_PAGE_LIMIT = 20;
-export const FOLLOW_LIST_PAGE_LIMIT = 24;
+export const FOLLOW_LIST_PAGE_LIMIT = 20;
 
 export const SEARCH_DEBOUNCE_MS = 300;
 
