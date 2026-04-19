@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Modal from "./Modal.jsx";
 import Button from "./Button.jsx";
 
@@ -28,9 +28,14 @@ export default function ConfirmModal({
   const cancelRef = useRef(null);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    if (!open) setPending(false);
-  }, [open]);
+  // Reset the in-flight flag whenever the dialog closes externally
+  // (e.g. parent toggles `open` while a request is still pending).
+  // Done during render — React's recommended alternative to a reset effect.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open && pending) setPending(false);
+  }
 
   const handleConfirm = async () => {
     if (typeof onConfirm !== "function") return;

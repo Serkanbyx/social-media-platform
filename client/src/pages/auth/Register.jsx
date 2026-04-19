@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import AuthShell from "../../components/layout/AuthShell.jsx";
 import Banner from "../../components/ui/Banner.jsx";
 import PasswordInput from "../../components/ui/PasswordInput.jsx";

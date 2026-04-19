@@ -5,7 +5,7 @@ import ToggleSwitch from "../../components/ui/ToggleSwitch.jsx";
 import SettingsSection from "../../components/settings/SettingsSection.jsx";
 import SaveIndicator from "../../components/settings/SaveIndicator.jsx";
 
-import { usePreferences } from "../../context/PreferencesContext.jsx";
+import { usePreferences } from "../../context/usePreferences.js";
 import usePreferenceAutoSave from "../../hooks/usePreferenceAutoSave.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 

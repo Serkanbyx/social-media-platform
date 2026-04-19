@@ -25,7 +25,7 @@ import PostGrid from "../../components/post/PostGrid.jsx";
 import FollowButton from "../../components/user/FollowButton.jsx";
 import ProfileHeader from "../../components/user/ProfileHeader.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 import useInfiniteScroll from "../../hooks/useInfiniteScroll.js";

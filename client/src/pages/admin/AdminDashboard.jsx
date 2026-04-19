@@ -17,7 +17,7 @@ import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Skeleton from "../../components/ui/Skeleton.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 
 import * as adminService from "../../services/adminService.js";

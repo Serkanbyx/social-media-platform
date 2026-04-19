@@ -41,30 +41,27 @@ export default function Tooltip({ content, children, side = "top" }) {
     setOpen(false);
   };
 
+  // Only inject aria-describedby into the trigger (screen readers need
+  // it on the focusable node). All event handlers live on the wrapper
+  // span — React's synthetic onFocus/onBlur bubble, so this catches
+  // hover and keyboard focus on the underlying trigger transparently.
+  // Avoiding handler injection via cloneElement keeps React Compiler
+  // from flagging "ref read during render".
+  const childDescribedBy = children.props["aria-describedby"];
   const triggerEl = cloneElement(children, {
-    onMouseEnter: (event) => {
-      children.props.onMouseEnter?.(event);
-      show();
-    },
-    onMouseLeave: (event) => {
-      children.props.onMouseLeave?.(event);
-      hide();
-    },
-    onFocus: (event) => {
-      children.props.onFocus?.(event);
-      show();
-    },
-    onBlur: (event) => {
-      children.props.onBlur?.(event);
-      hide();
-    },
     "aria-describedby": open
-      ? cn(children.props["aria-describedby"], tooltipId)
-      : children.props["aria-describedby"],
+      ? cn(childDescribedBy, tooltipId)
+      : childDescribedBy,
   });
 
   return (
-    <span className="relative inline-flex">
+    <span
+      className="relative inline-flex"
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={show}
+      onBlur={hide}
+    >
       {triggerEl}
       {open && (
         <span

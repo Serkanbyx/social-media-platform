@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -14,8 +12,13 @@ import * as notificationService from "../services/notificationService.js";
 import Avatar from "../components/ui/Avatar.jsx";
 import { formatRelative } from "../utils/formatDate.js";
 import { useMediaQuery } from "../hooks/useMediaQuery.js";
-import { useAuth } from "./AuthContext.jsx";
+import { useAuth } from "./useAuth.js";
 import { useSocket } from "./SocketContext.jsx";
+import {
+  NotificationContext,
+  linkForNotification,
+  sentenceFor,
+} from "./useNotifications.js";
 
 /**
  * NotificationContext — owns the notification list, unread badge and the
@@ -38,17 +41,6 @@ import { useSocket } from "./SocketContext.jsx";
  *    notifications.
  */
 
-const NotificationContext = createContext(null);
-
-const TYPE_SENTENCE = {
-  like: "gönderini beğendi",
-  comment: "gönderine yorum yaptı",
-  follow: "seni takip etmeye başladı",
-};
-
-const sentenceFor = (type) =>
-  TYPE_SENTENCE[type] || "yeni bir bildirim gönderdi";
-
 // Cap for concurrent stacked toasts so a thundering-herd of new
 // notifications doesn't bury the rest of the UI.
 const MAX_TOAST_STACK = 3;
@@ -67,17 +59,6 @@ const isValidNotification = (value) =>
   typeof value.type === "string" &&
   value.sender &&
   typeof value.sender === "object";
-
-// Build the in-app deep link for a notification. Falls back to the
-// notifications page when the embedded post/sender is missing.
-const linkForNotification = (notification) => {
-  if (!notification) return "/notifications";
-  if (notification.type === "follow" && notification.sender?.username) {
-    return `/u/${notification.sender.username}`;
-  }
-  if (notification.post?._id) return `/posts/${notification.post._id}`;
-  return "/notifications";
-};
 
 export function NotificationProvider({ children }) {
   const { user } = useAuth();
@@ -110,13 +91,25 @@ export function NotificationProvider({ children }) {
     isMobileRef.current = isMobile;
   }, [isMobile]);
 
-  // Reset on logout / user switch so we don't leak state between sessions.
+  // Reset on logout / user switch so we don't leak state between
+  // sessions. State resets are done during render via the
+  // "store-previous-prop" pattern — React's recommended alternative to a
+  // setState-in-effect cascade. Side effects (dismissing toasts, ref
+  // bookkeeping) still belong in an effect.
+  const [prevUserId, setPrevUserId] = useState(user?._id ?? null);
+  const currentUserId = user?._id ?? null;
+  if (prevUserId !== currentUserId) {
+    setPrevUserId(currentUserId);
+    if (!currentUserId) {
+      setItems([]);
+      setUnreadCount(0);
+      setHasMore(true);
+      setNextCursor(null);
+    }
+  }
+
   useEffect(() => {
     if (user) return;
-    setItems([]);
-    setUnreadCount(0);
-    setHasMore(true);
-    setNextCursor(null);
     initialised.current = false;
     activeToastsRef.current.forEach((id) => toast.dismiss(id));
     activeToastsRef.current = [];
@@ -412,17 +405,3 @@ export function NotificationProvider({ children }) {
     </NotificationContext.Provider>
   );
 }
-
-export function useNotifications() {
-  const ctx = useContext(NotificationContext);
-  if (!ctx) {
-    throw new Error(
-      "useNotifications must be used within a NotificationProvider."
-    );
-  }
-  return ctx;
-}
-
-// Helper exported for components that build their own deep links
-// (notification rows, mini popover) without re-importing the provider.
-export { linkForNotification, sentenceFor };

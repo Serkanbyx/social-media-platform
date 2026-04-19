@@ -12,7 +12,7 @@ import Tooltip from "../../components/ui/Tooltip.jsx";
 import SettingsSection from "../../components/settings/SettingsSection.jsx";
 import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import * as authService from "../../services/authService.js";
 import { isStrongEnough, scorePassword } from "../../utils/passwordStrength.js";
 import notify from "../../utils/notify.js";

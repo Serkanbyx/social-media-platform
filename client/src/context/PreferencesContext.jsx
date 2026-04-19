@@ -1,13 +1,8 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import * as userService from "../services/userService.js";
-import { useAuth } from "./AuthContext.jsx";
+import { useAuth } from "./useAuth.js";
+import { PreferencesContext } from "./usePreferences.js";
 
 /**
  * PreferencesContext — derives UI preferences from the authenticated user
@@ -28,8 +23,6 @@ import { useAuth } from "./AuthContext.jsx";
  *    object in `AuthContext` first, then PATCH the server. On failure we
  *    roll back so the UI never lies about persisted state.
  */
-
-const PreferencesContext = createContext(null);
 
 const FONT_SIZE_CLASSES = ["font-size-sm", "font-size-md", "font-size-lg"];
 const FONT_SIZE_TO_CLASS = {
@@ -173,12 +166,4 @@ export function PreferencesProvider({ children }) {
       {children}
     </PreferencesContext.Provider>
   );
-}
-
-export function usePreferences() {
-  const ctx = useContext(PreferencesContext);
-  if (!ctx) {
-    throw new Error("usePreferences must be used within a PreferencesProvider.");
-  }
-  return ctx;
 }

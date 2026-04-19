@@ -31,7 +31,7 @@ import { UserCardSkeleton } from "../../components/ui/skeletons/index.js";
 
 import UserCard from "../../components/user/UserCard.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 
 import useDebounce from "../../hooks/useDebounce.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";

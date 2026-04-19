@@ -16,7 +16,7 @@ import Dropdown from "../ui/Dropdown.jsx";
 import IconButton from "../ui/IconButton.jsx";
 import Tooltip from "../ui/Tooltip.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 
 import { cldUrl } from "../../utils/cldUrl.js";
 import { cn } from "../../utils/cn.js";
@@ -121,13 +121,11 @@ function PostCard({
   const profileHref = `/u/${username}`;
   const postHref = `/posts/${post?._id}`;
 
-  const initialLiked = useMemo(() => {
+  const [liked, setLiked] = useState(() => {
     if (!user || !Array.isArray(post?.likes)) return false;
     const viewerId = String(user._id);
     return post.likes.some((id) => String(id) === viewerId);
-  }, [post?.likes, user]);
-
-  const [liked, setLiked] = useState(initialLiked);
+  });
   const [likesCount, setLikesCount] = useState(post?.likesCount ?? 0);
   const [likeBusy, setLikeBusy] = useState(false);
   const [popping, setPopping] = useState(false);
@@ -202,7 +200,7 @@ function PostCard({
     } catch {
       notify.error("Bağlantı kopyalanamadı.");
     }
-  }, [post?._id]);
+  }, [post._id]);
 
   const handleDeleteConfirm = useCallback(async () => {
     try {
@@ -215,7 +213,7 @@ function PostCard({
       notify.error("Gönderi silinemedi.");
       setConfirmOpen(false);
     }
-  }, [onDelete, post?._id]);
+  }, [onDelete, post._id]);
 
   const menuItems = useMemo(() => {
     const items = [

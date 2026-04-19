@@ -8,7 +8,7 @@ import Dropdown from "../ui/Dropdown.jsx";
 import IconButton from "../ui/IconButton.jsx";
 import Tooltip from "../ui/Tooltip.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 
 import * as commentService from "../../services/commentService.js";
 

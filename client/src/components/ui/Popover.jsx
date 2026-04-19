@@ -1,4 +1,4 @@
-import { cloneElement, useId, useRef, useState } from "react";
+import { cloneElement, useCallback, useId, useRef, useState } from "react";
 import { useClickOutside } from "../../hooks/useClickOutside.js";
 import { useEscapeKey } from "../../hooks/useEscapeKey.js";
 import { cn } from "../../utils/cn.js";
@@ -31,28 +31,37 @@ export default function Popover({
   const reactId = useId();
   const panelId = `popover-${reactId}`;
   const wrapperRef = useRef(null);
-  const triggerRef = useRef(null);
   const [open, setOpen] = useState(defaultOpen);
 
   const close = () => setOpen(false);
 
+  // Trigger is the first focusable child inside the wrapper. Looking it
+  // up on demand avoids cloneElement-with-ref-callback, which React
+  // Compiler can't analyse safely.
+  const focusTrigger = () => {
+    const node = wrapperRef.current?.querySelector(
+      '[aria-haspopup="dialog"]'
+    );
+    node?.focus?.({ preventScroll: true });
+  };
+
   useClickOutside(wrapperRef, close, open);
   useEscapeKey(() => {
     setOpen(false);
-    triggerRef.current?.focus?.({ preventScroll: true });
+    focusTrigger();
   }, open);
 
-  const triggerEl = cloneElement(trigger, {
-    ref: (node) => {
-      triggerRef.current = node;
-      const original = trigger.ref;
-      if (typeof original === "function") original(node);
-      else if (original && typeof original === "object") original.current = node;
-    },
-    onClick: (event) => {
-      trigger.props.onClick?.(event);
+  const originalTriggerOnClick = trigger.props.onClick;
+  const handleTriggerClick = useCallback(
+    (event) => {
+      originalTriggerOnClick?.(event);
       if (!event.defaultPrevented) setOpen((value) => !value);
     },
+    [originalTriggerOnClick]
+  );
+
+  const triggerEl = cloneElement(trigger, {
+    onClick: handleTriggerClick,
     "aria-haspopup": "dialog",
     "aria-expanded": open,
     "aria-controls": panelId,

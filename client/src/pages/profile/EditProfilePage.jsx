@@ -25,7 +25,7 @@ import Input from "../../components/ui/Input.jsx";
 import Spinner from "../../components/ui/Spinner.jsx";
 import Textarea from "../../components/ui/Textarea.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 import useUnsavedChangesPrompt from "../../hooks/useUnsavedChangesPrompt.js";

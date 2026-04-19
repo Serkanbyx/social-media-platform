@@ -1,4 +1,11 @@
-import { cloneElement, useEffect, useId, useRef, useState } from "react";
+import {
+  cloneElement,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { useClickOutside } from "../../hooks/useClickOutside.js";
 import { useEscapeKey } from "../../hooks/useEscapeKey.js";
 import { cn } from "../../utils/cn.js";
@@ -33,15 +40,24 @@ export default function Dropdown({
   const reactId = useId();
   const menuId = `menu-${reactId}`;
   const wrapperRef = useRef(null);
-  const triggerRef = useRef(null);
   const itemsRef = useRef([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
+  // Trigger is the first focusable child inside the wrapper. Looking it
+  // up on demand avoids cloneElement-with-ref-callback, which React
+  // Compiler can't analyse safely.
+  const focusTrigger = () => {
+    const node = wrapperRef.current?.querySelector(
+      '[aria-haspopup="menu"]'
+    );
+    node?.focus?.({ preventScroll: true });
+  };
+
   const close = () => {
     setOpen(false);
     setActiveIndex(-1);
-    triggerRef.current?.focus?.({ preventScroll: true });
+    focusTrigger();
   };
 
   useClickOutside(wrapperRef, () => setOpen(false), open);
@@ -97,17 +113,17 @@ export default function Dropdown({
     }
   };
 
-  const triggerEl = cloneElement(trigger, {
-    ref: (node) => {
-      triggerRef.current = node;
-      const original = trigger.ref;
-      if (typeof original === "function") original(node);
-      else if (original && typeof original === "object") original.current = node;
-    },
-    onClick: (event) => {
-      trigger.props.onClick?.(event);
+  const originalTriggerOnClick = trigger.props.onClick;
+  const handleTriggerClick = useCallback(
+    (event) => {
+      originalTriggerOnClick?.(event);
       if (!event.defaultPrevented) setOpen((value) => !value);
     },
+    [originalTriggerOnClick]
+  );
+
+  const triggerEl = cloneElement(trigger, {
+    onClick: handleTriggerClick,
     "aria-haspopup": "menu",
     "aria-expanded": open,
     "aria-controls": menuId,

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import AuthShell from "../../components/layout/AuthShell.jsx";
 import Banner from "../../components/ui/Banner.jsx";
 import PasswordInput from "../../components/ui/PasswordInput.jsx";

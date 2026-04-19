@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { usePreferences } from "../context/PreferencesContext.jsx";
+import { usePreferences } from "../context/usePreferences.js";
 import notify from "../utils/notify.js";
 
 const SAVE_INDICATOR_MS = 1500;

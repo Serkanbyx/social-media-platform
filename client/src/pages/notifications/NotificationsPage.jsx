@@ -8,7 +8,7 @@ import { NotificationItemSkeleton } from "../../components/ui/skeletons";
 import Spinner from "../../components/ui/Spinner.jsx";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll.js";
-import { useNotifications } from "../../context/NotificationContext.jsx";
+import { useNotifications } from "../../context/useNotifications.js";
 import { notify } from "../../utils/notify.js";
 
 /**

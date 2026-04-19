@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { io } from "socket.io-client";
 
-import { useAuth } from "./AuthContext.jsx";
+import { useAuth } from "./useAuth.js";
 
 /**
  * SocketContext — opens a single, authenticated Socket.IO connection while

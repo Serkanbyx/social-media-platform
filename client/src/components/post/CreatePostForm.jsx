@@ -25,7 +25,7 @@ import Popover from "../ui/Popover.jsx";
 import Spinner from "../ui/Spinner.jsx";
 import Tooltip from "../ui/Tooltip.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import useAutoResizeTextarea from "../../hooks/useAutoResizeTextarea.js";
 import useDebounce from "../../hooks/useDebounce.js";
 import useLocalStorage from "../../hooks/useLocalStorage.js";

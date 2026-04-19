@@ -8,7 +8,7 @@ import ProtectedRoute from "./components/guards/ProtectedRoute.jsx";
 import ErrorBoundary from "./components/ui/ErrorBoundary.jsx";
 import Spinner from "./components/ui/Spinner.jsx";
 
-import { useAuth } from "./context/AuthContext.jsx";
+import { useAuth } from "./context/useAuth.js";
 
 /**
  * Top-level route tree (STEP 23, refined in STEP 38).

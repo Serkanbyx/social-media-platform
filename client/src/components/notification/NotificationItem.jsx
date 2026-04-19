@@ -12,7 +12,7 @@ import {
   linkForNotification,
   sentenceFor,
   useNotifications,
-} from "../../context/NotificationContext.jsx";
+} from "../../context/useNotifications.js";
 import { notify } from "../../utils/notify.js";
 
 /**

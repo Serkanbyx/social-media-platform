@@ -27,7 +27,7 @@ import {
 import CommentItem from "../../components/post/CommentItem.jsx";
 import PostCard from "../../components/post/PostCard.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import { useSocket } from "../../context/SocketContext.jsx";
 
 import useAutoResizeTextarea from "../../hooks/useAutoResizeTextarea.js";

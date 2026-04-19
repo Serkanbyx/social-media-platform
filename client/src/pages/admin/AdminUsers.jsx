@@ -30,7 +30,7 @@ import ToggleSwitch from "../../components/ui/ToggleSwitch.jsx";
 import Tooltip from "../../components/ui/Tooltip.jsx";
 import AdminTableRowSkeleton from "../../components/ui/skeletons/AdminTableRowSkeleton.jsx";
 
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import useDebounce from "../../hooks/useDebounce.js";
 import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 

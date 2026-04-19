@@ -2,7 +2,7 @@ import { memo, useCallback, useState } from "react";
 import { UserCheck, UserMinus, UserPlus } from "lucide-react";
 
 import Button from "../ui/Button.jsx";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
 import { cn } from "../../utils/cn.js";
 import { notify } from "../../utils/notify.js";
 import * as userService from "../../services/userService.js";

@@ -15,9 +15,9 @@ import {
   X,
 } from "lucide-react";
 
-import { useAuth } from "../../context/AuthContext.jsx";
-import { useNotifications } from "../../context/NotificationContext.jsx";
-import { usePreferences } from "../../context/PreferencesContext.jsx";
+import { useAuth } from "../../context/useAuth.js";
+import { useNotifications } from "../../context/useNotifications.js";
+import { usePreferences } from "../../context/usePreferences.js";
 import { useDebounce } from "../../hooks/useDebounce.js";
 import * as userService from "../../services/userService.js";
 import { SEARCH_DEBOUNCE_MS } from "../../utils/constants.js";
