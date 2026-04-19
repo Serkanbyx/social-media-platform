@@ -58,7 +58,7 @@ export default function Login() {
       subtitle="Sign in to your account and pick up where you left off."
       footer={
         <>
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             to="/register"
             className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"

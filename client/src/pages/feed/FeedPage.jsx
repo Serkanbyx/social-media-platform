@@ -82,25 +82,40 @@ export default function FeedPage() {
   useDocumentTitle(buildTitle(newCount));
 
   // ----- Initial fetch -----
-  const fetchInitial = useCallback(async () => {
+  // The mount/retry fetch runs as an inline async IIFE so React can see
+  // that no setState is invoked synchronously in the effect body. A
+  // `cancelled` flag drops late responses if the component unmounts (or
+  // a retry kicks in) mid-flight.
+  const [retryToken, setRetryToken] = useState(0);
+
+  const retryFeed = useCallback(() => {
     setInitialLoading(true);
     setError("");
-    try {
-      const data = await feedService.getFeed({ limit: FEED_PAGE_LIMIT });
-      setItems(Array.isArray(data?.items) ? data.items : []);
-      setNextCursor(data?.nextCursor || null);
-      setHasMore(Boolean(data?.hasMore));
-      setNewCount(0);
-    } catch {
-      setError("Couldn't load feed.");
-    } finally {
-      setInitialLoading(false);
-    }
+    setRetryToken((n) => n + 1);
   }, []);
 
   useEffect(() => {
-    fetchInitial();
-  }, [fetchInitial]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await feedService.getFeed({ limit: FEED_PAGE_LIMIT });
+        if (cancelled) return;
+        setItems(Array.isArray(data?.items) ? data.items : []);
+        setNextCursor(data?.nextCursor || null);
+        setHasMore(Boolean(data?.hasMore));
+        setNewCount(0);
+        setError("");
+      } catch {
+        if (cancelled) return;
+        setError("Couldn't load feed.");
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [retryToken]);
 
   // ----- Pagination -----
   const handleLoadMore = useCallback(async () => {
@@ -150,12 +165,23 @@ export default function FeedPage() {
   }, [socket]);
 
   const refreshFromTop = useCallback(async () => {
+    setInitialLoading(true);
+    setError("");
     setNewCount(0);
-    await fetchInitial();
+    try {
+      const data = await feedService.getFeed({ limit: FEED_PAGE_LIMIT });
+      setItems(Array.isArray(data?.items) ? data.items : []);
+      setNextCursor(data?.nextCursor || null);
+      setHasMore(Boolean(data?.hasMore));
+    } catch {
+      setError("Couldn't load feed.");
+    } finally {
+      setInitialLoading(false);
+    }
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [fetchInitial]);
+  }, []);
 
   // ----- Composer / card callbacks -----
   const handleCreated = useCallback((created) => {
@@ -240,7 +266,7 @@ export default function FeedPage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={fetchInitial}
+              onClick={retryFeed}
             >
               Try again
             </Button>
@@ -297,7 +323,7 @@ export default function FeedPage() {
         <div className="flex flex-col items-center gap-1 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
           <CheckCircle2 className="size-5 text-emerald-500" aria-hidden="true" />
           <p className="font-medium text-zinc-700 dark:text-zinc-200">
-            You're all caught up
+            You&apos;re all caught up
           </p>
           <p>
             For more, check out the{" "}

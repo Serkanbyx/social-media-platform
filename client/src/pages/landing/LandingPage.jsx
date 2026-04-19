@@ -62,23 +62,36 @@ export default function LandingPage() {
 
   useDocumentTitle("Pulse — Stay in tune with the community");
 
-  const fetchTrending = useCallback(async () => {
+  const [retryToken, setRetryToken] = useState(0);
+
+  const retryTrending = useCallback(() => {
     setLoading(true);
     setError(false);
-    try {
-      const data = await postService.explorePosts({ limit: TRENDING_LIMIT });
-      setPosts(Array.isArray(data?.items) ? data.items.slice(0, TRENDING_LIMIT) : []);
-    } catch {
-      setPosts([]);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+    setRetryToken((n) => n + 1);
   }, []);
 
   useEffect(() => {
-    fetchTrending();
-  }, [fetchTrending]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await postService.explorePosts({ limit: TRENDING_LIMIT });
+        if (cancelled) return;
+        setPosts(
+          Array.isArray(data?.items) ? data.items.slice(0, TRENDING_LIMIT) : []
+        );
+        setError(false);
+      } catch {
+        if (cancelled) return;
+        setPosts([]);
+        setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [retryToken]);
 
   const showSkeleton = loading;
   const showEmpty = !loading && (error || posts.length === 0);
@@ -223,7 +236,7 @@ export default function LandingPage() {
               }
               action={
                 error
-                  ? { label: "Try again", onClick: fetchTrending }
+                  ? { label: "Try again", onClick: retryTrending }
                   : { label: "Create an account", href: "/register" }
               }
             />

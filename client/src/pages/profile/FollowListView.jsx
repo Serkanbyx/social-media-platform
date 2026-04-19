@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -141,78 +135,101 @@ function FollowListInner({ username, tab }) {
   );
 
   // ----- Profile fetch -----
-  const fetchProfile = useCallback(async () => {
+  // The mount/retry fetch runs as an inline async IIFE so React can see
+  // that no setState happens synchronously in the effect body. The
+  // `cancelled` flag drops responses from a stale username/retry.
+  const [profileRetryToken, setProfileRetryToken] = useState(0);
+
+  const retryProfile = useCallback(() => {
     setProfileLoading(true);
     setProfileError("");
     setNotFound(false);
-    try {
-      const data = await userService.getUserByUsername(normalisedUsername);
-      setProfile(data?.user || null);
-      if (!data?.user) setNotFound(true);
-    } catch (error) {
-      if (error?.response?.status === 404) {
-        setNotFound(true);
-        setProfile(null);
-      } else {
-        setProfileError("Couldn't load profile.");
-      }
-    } finally {
-      setProfileLoading(false);
-    }
-  }, [normalisedUsername]);
+    setProfileRetryToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await userService.getUserByUsername(normalisedUsername);
+        if (cancelled) return;
+        setProfile(data?.user || null);
+        setNotFound(!data?.user);
+        setProfileError("");
+      } catch (error) {
+        if (cancelled) return;
+        if (error?.response?.status === 404) {
+          setNotFound(true);
+          setProfile(null);
+        } else {
+          setProfileError("Couldn't load profile.");
+        }
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [normalisedUsername, profileRetryToken]);
 
   // ----- List fetch -----
-  // Stale-response guard: a slow first-page request that resolves after a
-  // newer one would otherwise overwrite fresh data. The request id keeps
-  // only the latest in-flight response.
-  const requestIdRef = useRef(0);
+  // The mount/retry/tab-switch fetch runs as an inline async IIFE so React
+  // can see no setState happens synchronously in the effect body. The
+  // `cancelled` closure replaces the previous request-id ref: a slow
+  // first-page request that resolves after a newer one is dropped.
+  const [listRetryToken, setListRetryToken] = useState(0);
 
-  const fetchList = useCallback(async () => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-
+  const retryList = useCallback(() => {
     setListLoading(true);
     setListError("");
     setForbidden(false);
-
-    try {
-      const fn =
-        tab === "followers" ? userService.getFollowers : userService.getFollowing;
-      const data = await fn(normalisedUsername, undefined, FOLLOW_LIST_PAGE_LIMIT);
-      if (requestIdRef.current !== requestId) return;
-      const incoming = Array.isArray(data?.items) ? data.items : [];
-      setItems(incoming);
-      setNextCursor(data?.nextCursor || null);
-      setHasMore(Boolean(data?.hasMore));
-    } catch (error) {
-      if (requestIdRef.current !== requestId) return;
-      const status = error?.response?.status;
-      if (status === 403) {
-        setForbidden(true);
-        setItems([]);
-        setHasMore(false);
-      } else if (status === 404) {
-        // Profile fetch will surface the proper 404 EmptyState — list
-        // simply has nothing to show in the meantime.
-        setItems([]);
-        setHasMore(false);
-      } else {
-        setListError("Couldn't load list.");
-      }
-    } finally {
-      if (requestIdRef.current === requestId) {
-        setListLoading(false);
-      }
-    }
-  }, [normalisedUsername, tab]);
+    setListRetryToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    fetchList();
-  }, [fetchList]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const fn =
+          tab === "followers"
+            ? userService.getFollowers
+            : userService.getFollowing;
+        const data = await fn(
+          normalisedUsername,
+          undefined,
+          FOLLOW_LIST_PAGE_LIMIT
+        );
+        if (cancelled) return;
+        const incoming = Array.isArray(data?.items) ? data.items : [];
+        setItems(incoming);
+        setNextCursor(data?.nextCursor || null);
+        setHasMore(Boolean(data?.hasMore));
+        setListError("");
+        setForbidden(false);
+      } catch (error) {
+        if (cancelled) return;
+        const status = error?.response?.status;
+        if (status === 403) {
+          setForbidden(true);
+          setItems([]);
+          setHasMore(false);
+        } else if (status === 404) {
+          // Profile fetch will surface the proper 404 EmptyState — list
+          // simply has nothing to show in the meantime.
+          setItems([]);
+          setHasMore(false);
+        } else {
+          setListError("Couldn't load list.");
+        }
+      } finally {
+        if (!cancelled) setListLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [normalisedUsername, tab, listRetryToken]);
 
   // ----- Pagination -----
   const handleLoadMore = useCallback(async () => {
@@ -442,7 +459,7 @@ function FollowListInner({ username, tab }) {
         <Banner variant="danger">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span>{profileError}</span>
-            <Button variant="secondary" size="sm" onClick={fetchProfile}>
+            <Button variant="secondary" size="sm" onClick={retryProfile}>
               Try again
             </Button>
           </div>
@@ -513,7 +530,7 @@ function FollowListInner({ username, tab }) {
           <Banner variant="danger">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>{listError}</span>
-              <Button variant="secondary" size="sm" onClick={fetchList}>
+              <Button variant="secondary" size="sm" onClick={retryList}>
                 Try again
               </Button>
             </div>
@@ -564,7 +581,7 @@ function FollowListInner({ username, tab }) {
 
             {!hasMore && items.length > 0 && !debouncedQuery && (
               <p className="py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                You've reached the end of the list
+                You&apos;ve reached the end of the list
               </p>
             )}
           </>
@@ -610,7 +627,7 @@ function FollowListInner({ username, tab }) {
           </>
         }
       >
-        <p>You'll be back instantly — your position on the page is preserved.</p>
+        <p>You&apos;ll be back instantly — your position on the page is preserved.</p>
       </Modal>
     </div>
   );

@@ -32,7 +32,7 @@ export default function MainLayout() {
       {!online && (
         <div className="mx-auto w-full max-w-2xl px-4 pt-3 sm:px-6">
           <Banner variant="warning">
-            You're offline — some features may not work.
+            You&apos;re offline — some features may not work.
           </Banner>
         </div>
       )}

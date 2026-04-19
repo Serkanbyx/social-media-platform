@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   CheckCircle2,
@@ -100,66 +94,91 @@ function ProfileView({ username }) {
   useDocumentTitle(profile ? `@${profile.username}` : `@${normalisedUsername}`);
 
   // ----- Profile fetch -----
-  const fetchProfile = useCallback(async () => {
+  // The mount/retry fetch runs as an inline async IIFE so React can see
+  // that no setState happens synchronously in the effect body. The
+  // `cancelled` flag drops responses from a stale username/retry.
+  const [profileRetryToken, setProfileRetryToken] = useState(0);
+
+  const retryProfile = useCallback(() => {
     setProfileLoading(true);
     setProfileError("");
     setNotFound(false);
-    try {
-      const data = await userService.getUserByUsername(normalisedUsername);
-      setProfile(data?.user || null);
-      if (!data?.user) setNotFound(true);
-    } catch (error) {
-      if (error?.response?.status === 404) {
-        setNotFound(true);
-        setProfile(null);
-      } else {
-        setProfileError("Couldn't load profile.");
-      }
-    } finally {
-      setProfileLoading(false);
-    }
-  }, [normalisedUsername]);
+    setProfileRetryToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await userService.getUserByUsername(normalisedUsername);
+        if (cancelled) return;
+        setProfile(data?.user || null);
+        setNotFound(!data?.user);
+        setProfileError("");
+      } catch (error) {
+        if (cancelled) return;
+        if (error?.response?.status === 404) {
+          setNotFound(true);
+          setProfile(null);
+        } else {
+          setProfileError("Couldn't load profile.");
+        }
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [normalisedUsername, profileRetryToken]);
 
   // ----- Posts fetch -----
   // Keyed by `canSeePosts`: the profile load determines whether the grid
   // even gets a chance to fetch. Private posts are hidden server-side
   // too (404 from `/posts/user/:username`) but skipping the request
   // keeps DevTools quiet and saves a round trip.
-  const requestIdRef = useRef(0);
+  //
+  // The synchronous resets that used to live in the effect are now done
+  // at render time (React's recommended "adjust state when a value
+  // changes" pattern) so the effect can be pure async with no extra
+  // commit cycles. `cancelled` in the effect cleanup drops stale fetches
+  // when profile/visibility/username changes mid-flight.
+  const [postsRetryToken, setPostsRetryToken] = useState(0);
 
-  useEffect(() => {
+  const postsKey = profile
+    ? `${normalisedUsername}|${canSeePosts ? "y" : "n"}`
+    : "";
+  const [prevPostsKey, setPrevPostsKey] = useState(postsKey);
+  if (prevPostsKey !== postsKey) {
+    setPrevPostsKey(postsKey);
     if (!profile || !canSeePosts) {
       setPosts([]);
       setPostsLoading(false);
       setHasMore(false);
       setNextCursor(null);
       setPostsHidden(!canSeePosts && Boolean(profile));
-      return undefined;
+    } else {
+      setPostsLoading(true);
+      setPostsError("");
+      setPostsHidden(false);
     }
+  }
 
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
+  useEffect(() => {
+    if (!profile || !canSeePosts) return undefined;
 
     let cancelled = false;
-    setPostsLoading(true);
-    setPostsError("");
-    setPostsHidden(false);
-
     postService
       .getPostsByUsername(normalisedUsername, undefined, DEFAULT_PAGE_LIMIT)
       .then((data) => {
-        if (cancelled || requestIdRef.current !== requestId) return;
+        if (cancelled) return;
         const incoming = Array.isArray(data?.items) ? data.items : [];
         setPosts(incoming);
         setNextCursor(data?.nextCursor || null);
         setHasMore(Boolean(data?.hasMore));
       })
       .catch((error) => {
-        if (cancelled || requestIdRef.current !== requestId) return;
+        if (cancelled) return;
         if (error?.response?.status === 404) {
           // Treat a 404 here as "no posts visible" — the profile already
           // confirmed the user exists, so this is almost certainly the
@@ -172,15 +191,13 @@ function ProfileView({ username }) {
         }
       })
       .finally(() => {
-        if (!cancelled && requestIdRef.current === requestId) {
-          setPostsLoading(false);
-        }
+        if (!cancelled) setPostsLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [profile, canSeePosts, normalisedUsername]);
+  }, [profile, canSeePosts, normalisedUsername, postsRetryToken]);
 
   // ----- Pagination -----
   const handleLoadMore = useCallback(async () => {
@@ -217,29 +234,14 @@ function ProfileView({ username }) {
     rootMargin: "320px",
   });
 
-  // Manual posts retry — bumps the request id so any in-flight stale
-  // promise is dropped, then re-fires the first page fetch. Used by the
-  // inline error banner without re-running the whole effect chain.
-  const retryPosts = useCallback(async () => {
-    requestIdRef.current += 1;
+  // Manual posts retry — bumps the token declared above so the fetch
+  // effect re-runs. The effect's cleanup flips `cancelled` on the
+  // previous in-flight promise, so there's no stale-response race here.
+  const retryPosts = useCallback(() => {
     setPostsError("");
     setPostsLoading(true);
-    try {
-      const data = await postService.getPostsByUsername(
-        normalisedUsername,
-        undefined,
-        DEFAULT_PAGE_LIMIT
-      );
-      const incoming = Array.isArray(data?.items) ? data.items : [];
-      setPosts(incoming);
-      setNextCursor(data?.nextCursor || null);
-      setHasMore(Boolean(data?.hasMore));
-    } catch {
-      setPostsError("Couldn't load posts.");
-    } finally {
-      setPostsLoading(false);
-    }
-  }, [normalisedUsername]);
+    setPostsRetryToken((n) => n + 1);
+  }, []);
 
   // ----- Header callbacks -----
   // Optimistically reflect a follow toggle in the local profile state so
@@ -288,7 +290,7 @@ function ProfileView({ username }) {
         <Banner variant="danger">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span>{profileError}</span>
-            <Button variant="secondary" size="sm" onClick={fetchProfile}>
+            <Button variant="secondary" size="sm" onClick={retryProfile}>
               Try again
             </Button>
           </div>
@@ -401,7 +403,7 @@ function ProfileView({ username }) {
                     className="size-4 text-emerald-500"
                     aria-hidden="true"
                   />
-                  You've seen all the posts
+                  You&apos;ve seen all the posts
                 </p>
               )}
           </section>

@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Eye,
@@ -73,54 +68,67 @@ export default function AdminPosts() {
   const hasActiveFilters =
     debouncedSearch.length > 0 || status !== "all";
 
-  const handleResetFilters = useCallback(() => {
-    setSearch("");
-    setStatus("all");
-  }, []);
-
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryToken, setRetryToken] = useState(0);
 
-  const requestIdRef = useRef(0);
+  const handleSearchChange = useCallback((next) => {
+    setSearch(next);
+    setPage(1);
+  }, []);
 
-  const fetchPosts = useCallback(async () => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
+  const handleStatusChange = useCallback((next) => {
+    setStatus(next);
+    setPage(1);
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setSearch("");
+    setStatus("all");
+    setPage(1);
+  }, []);
+
+  const retryPosts = useCallback(() => {
     setLoading(true);
     setError("");
-    try {
-      const data = await adminService.listAllPosts({
-        page,
-        limit: ADMIN_PAGE_SIZE,
-        q: debouncedSearch || undefined,
-        isHidden: status === "all" ? undefined : status,
-      });
-      if (requestIdRef.current !== requestId) return;
-      setItems(Array.isArray(data?.items) ? data.items : []);
-      setTotal(typeof data?.total === "number" ? data.total : 0);
-      setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
-    } catch {
-      if (requestIdRef.current !== requestId) return;
-      setError("Couldn't load posts.");
-      setItems([]);
-      setTotal(0);
-      setTotalPages(1);
-    } finally {
-      if (requestIdRef.current === requestId) setLoading(false);
-    }
-  }, [debouncedSearch, page, status]);
+    setRetryToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, status]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminService.listAllPosts({
+          page,
+          limit: ADMIN_PAGE_SIZE,
+          q: debouncedSearch || undefined,
+          isHidden: status === "all" ? undefined : status,
+        });
+        if (cancelled) return;
+        setItems(Array.isArray(data?.items) ? data.items : []);
+        setTotal(typeof data?.total === "number" ? data.total : 0);
+        setTotalPages(
+          typeof data?.totalPages === "number" ? data.totalPages : 1
+        );
+        setError("");
+      } catch {
+        if (cancelled) return;
+        setError("Couldn't load posts.");
+        setItems([]);
+        setTotal(0);
+        setTotalPages(1);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearch, page, status, retryToken]);
 
   const updateLocalPost = useCallback((id, patch) => {
     setItems((prev) =>
@@ -171,7 +179,7 @@ export default function AdminPosts() {
     <div className="space-y-4">
       <AdminFiltersBar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Search post content"
         searchAriaLabel="Search post content"
         searchPending={search.trim() !== debouncedSearch}
@@ -182,7 +190,7 @@ export default function AdminPosts() {
             label="Status"
             inline
             value={status}
-            onChange={setStatus}
+            onChange={handleStatusChange}
             options={STATUS_OPTIONS}
           />
         }
@@ -191,7 +199,7 @@ export default function AdminPosts() {
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           <span>{error}</span>
-          <Button variant="secondary" size="sm" onClick={fetchPosts}>
+          <Button variant="secondary" size="sm" onClick={retryPosts}>
             Try again
           </Button>
         </div>

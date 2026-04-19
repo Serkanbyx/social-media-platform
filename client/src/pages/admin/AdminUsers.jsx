@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Filter,
@@ -90,12 +84,6 @@ export default function AdminUsers() {
   const hasActiveFilters =
     debouncedSearch.length > 0 || role !== "all" || status !== "all";
 
-  const handleResetFilters = useCallback(() => {
-    setSearch("");
-    setRole("all");
-    setStatus("all");
-  }, []);
-
   // ---------- Data ----------
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
@@ -103,46 +91,71 @@ export default function AdminUsers() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryToken, setRetryToken] = useState(0);
 
-  const requestIdRef = useRef(0);
+  // Filter changes always reset to page 1 — a moderator searching from page
+  // 17 should not stay on page 17 of the new filter context. Doing it in
+  // the change handlers (instead of an effect) avoids cascading renders.
+  const handleSearchFilterChange = useCallback((next) => {
+    setSearch(next);
+    setPage(1);
+  }, []);
 
-  const fetchUsers = useCallback(async () => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
+  const handleRoleFilterChange = useCallback((next) => {
+    setRole(next);
+    setPage(1);
+  }, []);
+
+  const handleStatusFilterChange = useCallback((next) => {
+    setStatus(next);
+    setPage(1);
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setSearch("");
+    setRole("all");
+    setStatus("all");
+    setPage(1);
+  }, []);
+
+  const retryUsers = useCallback(() => {
     setLoading(true);
     setError("");
-    try {
-      const data = await adminService.listUsers({
-        page,
-        limit: ADMIN_PAGE_SIZE,
-        q: debouncedSearch || undefined,
-        role: role === "all" ? undefined : role,
-        isActive: status === "all" ? undefined : status,
-      });
-      if (requestIdRef.current !== requestId) return;
-      setItems(Array.isArray(data?.items) ? data.items : []);
-      setTotal(typeof data?.total === "number" ? data.total : 0);
-      setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
-    } catch {
-      if (requestIdRef.current !== requestId) return;
-      setError("Couldn't load users.");
-      setItems([]);
-      setTotal(0);
-      setTotalPages(1);
-    } finally {
-      if (requestIdRef.current === requestId) setLoading(false);
-    }
-  }, [debouncedSearch, page, role, status]);
+    setRetryToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  // Reset to first page whenever the filter context changes — a moderator
-  // searching from page 17 should not stay on page 17 of the new filter.
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, role, status]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminService.listUsers({
+          page,
+          limit: ADMIN_PAGE_SIZE,
+          q: debouncedSearch || undefined,
+          role: role === "all" ? undefined : role,
+          isActive: status === "all" ? undefined : status,
+        });
+        if (cancelled) return;
+        setItems(Array.isArray(data?.items) ? data.items : []);
+        setTotal(typeof data?.total === "number" ? data.total : 0);
+        setTotalPages(
+          typeof data?.totalPages === "number" ? data.totalPages : 1
+        );
+        setError("");
+      } catch {
+        if (cancelled) return;
+        setError("Couldn't load users.");
+        setItems([]);
+        setTotal(0);
+        setTotalPages(1);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearch, page, role, status, retryToken]);
 
   // Track admin head-count locally so the UI can mirror the
   // "at least one active admin must remain" server rule. We only know
@@ -232,7 +245,7 @@ export default function AdminUsers() {
     <div className="space-y-4">
       <AdminFiltersBar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchFilterChange}
         searchPlaceholder="Search by username or name"
         searchAriaLabel="Search users"
         searchPending={search.trim() !== debouncedSearch}
@@ -251,14 +264,14 @@ export default function AdminUsers() {
               label="Role"
               inline
               value={role}
-              onChange={setRole}
+              onChange={handleRoleFilterChange}
               options={ROLE_OPTIONS}
             />
             <AdminSelect
               label="Status"
               inline
               value={status}
-              onChange={setStatus}
+              onChange={handleStatusFilterChange}
               options={STATUS_OPTIONS}
             />
           </>
@@ -268,7 +281,7 @@ export default function AdminUsers() {
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           <span>{error}</span>
-          <Button variant="secondary" size="sm" onClick={fetchUsers}>
+          <Button variant="secondary" size="sm" onClick={retryUsers}>
             Try again
           </Button>
         </div>

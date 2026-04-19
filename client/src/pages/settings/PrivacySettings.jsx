@@ -76,7 +76,7 @@ export default function PrivacySettings() {
             <ShieldOff className="size-4" aria-hidden="true" />
           </span>
           <p className="min-w-0 flex-1">
-            You haven't blocked anyone yet. The blocking flow is coming soon.
+            You haven&apos;t blocked anyone yet. The blocking flow is coming soon.
           </p>
         </div>
       </SettingsSection>

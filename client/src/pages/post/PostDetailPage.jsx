@@ -595,7 +595,7 @@ function PostDetailView({ postId }) {
             !hasMore &&
             !commentsError && (
               <p className="py-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                You've seen all the comments.
+                You&apos;ve seen all the comments.
               </p>
             )}
         </>

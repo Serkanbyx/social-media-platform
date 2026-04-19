@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Flame, Search, SearchX, Users, X } from "lucide-react";
 
@@ -77,10 +71,22 @@ export default function ExplorePage() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const initialQuery = sanitizeQuery(searchParams.get("q") || "");
+  const urlQuery = sanitizeQuery(searchParams.get("q") || "");
 
-  const [query, setQuery] = useState(initialQuery);
+  const [query, setQuery] = useState(urlQuery);
   const debouncedQuery = useDebounce(query.trim(), SEARCH_DEBOUNCE_MS);
+
+  // URL → state sync done during render (React's recommended pattern for
+  // mirroring an external value). Only adopt the URL value when it differs
+  // from both the live and debounced query — otherwise typing would race
+  // with the URL-write effect below and ping-pong forever.
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
+  if (urlQuery !== prevUrlQuery) {
+    setPrevUrlQuery(urlQuery);
+    if (urlQuery !== query.trim() && urlQuery !== debouncedQuery) {
+      setQuery(urlQuery);
+    }
+  }
 
   const [posts, setPosts] = useState([]);
   const [nextCursor, setNextCursor] = useState(null);
@@ -123,60 +129,62 @@ export default function ExplorePage() {
     setSearchParams(next, { replace: true });
   }, [activeQuery, searchParams, setSearchParams]);
 
-  useEffect(() => {
-    const fromUrl = sanitizeQuery(searchParams.get("q") || "");
-    if (fromUrl !== query.trim() && fromUrl !== debouncedQuery) {
-      setQuery(fromUrl);
-    }
-    // We intentionally only react to URL → state when the URL changes,
-    // not on every keystroke (which would cause an infinite ping-pong
-    // with the effect above).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  // Reset the "view all" toggle whenever the query changes — otherwise
-  // expanding for one term silently carries over into the next.
-  useEffect(() => {
+  // Reset the "view all" toggle and prime people-panel state whenever the
+  // active query changes — otherwise expansion silently carries over and
+  // the people skeleton wouldn't show on a fresh search. Done as a
+  // render-time reset (React's recommended pattern) to avoid extra commit
+  // cycles from effects.
+  const [prevActiveQuery, setPrevActiveQuery] = useState(activeQuery);
+  if (prevActiveQuery !== activeQuery) {
+    setPrevActiveQuery(activeQuery);
     setPeopleExpanded(false);
-  }, [activeQuery]);
+    if (activeQuery) {
+      setPeopleLoading(true);
+    } else {
+      setPeople([]);
+      setPeopleLoading(false);
+    }
+  }
 
   // ----- Posts fetch (trending OR search) -----
-  // We use a request-id guard to drop stale responses: if the user types
-  // fast, an older fetch may resolve after a newer one, which would
-  // otherwise overwrite fresh results with stale ones.
-  const requestIdRef = useRef(0);
+  // The async work runs inline inside the effect so React can see that no
+  // setState happens synchronously in the effect body. The `cancelled`
+  // closure drops stale responses if the user types fast (older fetch
+  // resolving after a newer one would otherwise overwrite fresh results).
+  const [postsRetryToken, setPostsRetryToken] = useState(0);
 
-  const fetchPosts = useCallback(async () => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-
+  const retryPosts = useCallback(() => {
     setInitialLoading(true);
     setPostsError("");
-
-    try {
-      const data = await postService.explorePosts({
-        limit: EXPLORE_PAGE_LIMIT,
-        q: activeQuery || undefined,
-      });
-      if (requestIdRef.current !== requestId) return;
-      setPosts(Array.isArray(data?.items) ? data.items : []);
-      setNextCursor(data?.nextCursor || null);
-      setHasMore(Boolean(data?.hasMore));
-    } catch {
-      if (requestIdRef.current !== requestId) return;
-      setPostsError("Couldn't load posts.");
-      setPosts([]);
-      setHasMore(false);
-    } finally {
-      if (requestIdRef.current === requestId) {
-        setInitialLoading(false);
-      }
-    }
-  }, [activeQuery]);
+    setPostsRetryToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await postService.explorePosts({
+          limit: EXPLORE_PAGE_LIMIT,
+          q: activeQuery || undefined,
+        });
+        if (cancelled) return;
+        setPosts(Array.isArray(data?.items) ? data.items : []);
+        setNextCursor(data?.nextCursor || null);
+        setHasMore(Boolean(data?.hasMore));
+        setPostsError("");
+      } catch {
+        if (cancelled) return;
+        setPostsError("Couldn't load posts.");
+        setPosts([]);
+        setHasMore(false);
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeQuery, postsRetryToken]);
 
   // ----- Pagination -----
   const handleLoadMore = useCallback(async () => {
@@ -213,16 +221,13 @@ export default function ExplorePage() {
   });
 
   // ----- People fetch (only when there's a query) -----
+  // The "no query" reset and the "loading=true" kickoff are handled in
+  // the render-time sync above, so this effect's only job is the async
+  // fetch — every setState here lives behind the await.
   useEffect(() => {
-    if (!hasQuery) {
-      setPeople([]);
-      setPeopleLoading(false);
-      return undefined;
-    }
+    if (!hasQuery) return undefined;
 
     let cancelled = false;
-    setPeopleLoading(true);
-
     userService
       .searchUsers(activeQuery)
       .then((data) => {
@@ -452,7 +457,7 @@ export default function ExplorePage() {
         {postsError && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
             <span>{postsError}</span>
-            <Button variant="secondary" size="sm" onClick={fetchPosts}>
+            <Button variant="secondary" size="sm" onClick={retryPosts}>
               Try again
             </Button>
           </div>
@@ -548,7 +553,7 @@ export default function ExplorePage() {
 
         {showPostsList && !hasMore && (
           <p className="py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-            You're all caught up
+            You&apos;re all caught up
           </p>
         )}
       </section>
@@ -593,7 +598,7 @@ export default function ExplorePage() {
         }
       >
         <p>
-          You'll be back instantly — your page position is preserved.
+          You&apos;ll be back instantly — your page position is preserved.
         </p>
       </Modal>
     </div>

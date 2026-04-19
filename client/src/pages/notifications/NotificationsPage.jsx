@@ -179,7 +179,7 @@ export default function NotificationsPage() {
 
             {!hasMore && items.length > 0 && (
               <p className="py-4 text-center text-2xs text-zinc-400">
-                You've reached the end of the list.
+                You&apos;ve reached the end of the list.
               </p>
             )}
           </>

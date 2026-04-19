@@ -80,31 +80,35 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadStats = useCallback(async (signal) => {
+  const retryStats = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const data = await adminService.getDashboardStats();
-      if (signal?.aborted) return;
       setStats(data?.stats || STATS_FALLBACK);
-      setError("");
     } catch {
-      if (signal?.aborted) return;
       setError("Couldn't load dashboard data.");
     } finally {
-      if (!signal?.aborted) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  const retryStats = useCallback(() => {
-    setLoading(true);
-    setError("");
-    loadStats();
-  }, [loadStats]);
-
   useEffect(() => {
     const controller = new AbortController();
-    loadStats(controller.signal);
+    (async () => {
+      try {
+        const data = await adminService.getDashboardStats();
+        if (controller.signal.aborted) return;
+        setStats(data?.stats || STATS_FALLBACK);
+      } catch {
+        if (controller.signal.aborted) return;
+        setError("Couldn't load dashboard data.");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    })();
     return () => controller.abort();
-  }, [loadStats]);
+  }, []);
 
   const greetingName = firstName(user?.name) || user?.username || "moderator";
 
