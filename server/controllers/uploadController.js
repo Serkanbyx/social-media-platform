@@ -42,4 +42,27 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
   });
 });
 
-export default { uploadAvatar };
+// DELETE /api/uploads/avatar
+// Clears the user's avatar pointer and best-effort deletes the underlying
+// Cloudinary asset. Idempotent: returns 200 with an empty avatar payload
+// even when the user had no avatar to begin with so the client can call
+// this without a pre-check.
+export const deleteAvatar = asyncHandler(async (req, res) => {
+  const previousPublicId = req.user.avatar?.publicId || "";
+
+  if (req.user.avatar?.url || previousPublicId) {
+    req.user.avatar = { url: "", publicId: "" };
+    await req.user.save();
+  }
+
+  if (previousPublicId) {
+    await destroyByPublicId(previousPublicId);
+  }
+
+  return res.status(200).json({
+    status: "success",
+    avatar: { url: "", publicId: "" },
+  });
+});
+
+export default { uploadAvatar, deleteAvatar };
