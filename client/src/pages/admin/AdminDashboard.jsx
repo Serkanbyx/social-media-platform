@@ -231,7 +231,10 @@ function StatCard({ label, value, icon: Icon, tone = "zinc" }) {
         <Icon className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        {/* Allow the label to wrap to two lines instead of truncating;
+         * "Posts in last 7 days" was being cut to "…7 d…" on narrow
+         * mobile cards which removed the meaningful suffix. */}
+        <p className="line-clamp-2 text-xs font-medium leading-snug text-zinc-500 dark:text-zinc-400">
           {label}
         </p>
         <p className="mt-1 text-2xl font-bold tracking-tight text-zinc-900 tnum dark:text-zinc-50">

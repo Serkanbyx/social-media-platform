@@ -427,12 +427,20 @@ export default function Navbar() {
             className="text-brand-600 transition-transform duration-fast hover:scale-[1.03] dark:text-brand-400"
           >
             <img src={logoUrl} alt="Pulse" className="hidden h-7 w-auto md:block" />
-            <img
-              src={logoUrl}
-              alt="Pulse"
-              className="block h-7 w-auto md:hidden"
-              style={{ clipPath: "inset(0 64% 0 0)" }}
-            />
+            {/* On mobile we crop to the glyph only. The previous clip-path
+             * value (64%) left a half-rendered "P" next to the icon, which
+             * read as a layout bug at narrow widths. A 7x7 wrapper with
+             * overflow hidden reliably shows just the rounded square. */}
+            <span
+              aria-hidden="true"
+              className="block h-7 w-7 overflow-hidden md:hidden"
+            >
+              <img
+                src={logoUrl}
+                alt=""
+                className="block h-7 w-auto max-w-none"
+              />
+            </span>
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">

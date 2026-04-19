@@ -26,9 +26,23 @@ import { cn } from "../../utils/cn.js";
  *  - A click outside the dropdown closes it
  */
 const ALIGN_CLASSES = {
-  start: "left-0 origin-top-left",
-  end: "right-0 origin-top-right",
+  start: { bottom: "left-0 origin-top-left", top: "left-0 origin-bottom-left" },
+  end: { bottom: "right-0 origin-top-right", top: "right-0 origin-bottom-right" },
 };
+
+const PLACEMENT_CLASSES = {
+  bottom: "top-full mt-2",
+  top: "bottom-full mb-2",
+};
+
+// Estimated dropdown height (4 items + padding) used to decide whether the
+// menu has enough room below the trigger before opening upward instead.
+const ESTIMATED_MENU_HEIGHT = 200;
+
+// Reserved viewport space at the bottom on mobile so the menu doesn't end
+// up underneath the fixed bottom navigation bar (h-14 + safety buffer).
+const MOBILE_BOTTOM_RESERVE = 80;
+const DESKTOP_BOTTOM_RESERVE = 16;
 
 export default function Dropdown({
   trigger,
@@ -43,6 +57,7 @@ export default function Dropdown({
   const itemsRef = useRef([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [placement, setPlacement] = useState("bottom");
 
   // Trigger is the first focusable child inside the wrapper. Looking it
   // up on demand avoids cloneElement-with-ref-callback, which React
@@ -62,6 +77,30 @@ export default function Dropdown({
 
   useClickOutside(wrapperRef, () => setOpen(false), open);
   useEscapeKey(close, open);
+
+  // Decide opening direction the moment the menu becomes visible. Without
+  // this, rows near the bottom of the viewport (or sitting just above a
+  // mobile bottom-nav) render their menu below the fold where the user
+  // can't reach the last item.
+  useEffect(() => {
+    if (!open) return;
+    const triggerNode = wrapperRef.current?.querySelector(
+      '[aria-haspopup="menu"]'
+    );
+    if (!triggerNode) return;
+    const rect = triggerNode.getBoundingClientRect();
+    const viewportH = window.innerHeight;
+    const bottomReserve =
+      window.innerWidth < 768 ? MOBILE_BOTTOM_RESERVE : DESKTOP_BOTTOM_RESERVE;
+    const spaceBelow = viewportH - rect.bottom - bottomReserve;
+    const spaceAbove = rect.top - 16;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPlacement(
+      spaceBelow < ESTIMATED_MENU_HEIGHT && spaceAbove > spaceBelow
+        ? "top"
+        : "bottom"
+    );
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -140,9 +179,9 @@ export default function Dropdown({
           aria-orientation="vertical"
           onKeyDown={handleKeyDown}
           className={cn(
-            "absolute z-40 mt-2 overflow-hidden rounded-xl py-1 surface-overlay animate-modal-in",
-            ALIGN_CLASSES[align] || ALIGN_CLASSES.end,
-            "top-full",
+            "absolute z-40 overflow-hidden rounded-xl py-1 surface-overlay animate-modal-in",
+            (ALIGN_CLASSES[align] || ALIGN_CLASSES.end)[placement],
+            PLACEMENT_CLASSES[placement],
             width
           )}
         >
