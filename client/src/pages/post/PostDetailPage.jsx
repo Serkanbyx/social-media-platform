@@ -422,11 +422,11 @@ function PostDetailView({ postId }) {
             <span className="tabular-nums font-medium text-zinc-700 dark:text-zinc-200">
               {compactCount(post.likesCount ?? 0)}
             </span>{" "}
-            likes ·{" "}
+            {(post.likesCount ?? 0) === 1 ? "like" : "likes"} ·{" "}
             <span className="tabular-nums font-medium text-zinc-700 dark:text-zinc-200">
               {compactCount(post.commentsCount ?? 0)}
             </span>{" "}
-            comments ·{" "}
+            {(post.commentsCount ?? 0) === 1 ? "comment" : "comments"} ·{" "}
             <time
               dateTime={toIso(post.createdAt)}
               className="text-zinc-500 dark:text-zinc-400"

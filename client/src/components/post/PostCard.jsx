@@ -20,7 +20,7 @@ import { useAuth } from "../../context/useAuth.js";
 
 import { cldUrl } from "../../utils/cldUrl.js";
 import { cn } from "../../utils/cn.js";
-import compactCount from "../../utils/formatCount.js";
+import compactCount, { pluralize } from "../../utils/formatCount.js";
 import {
   formatAbsolute,
   formatRelative,
@@ -435,7 +435,7 @@ function PostCard({
               />
               <span className="tnum">
                 {isDetail
-                  ? `${compactCount(likesCount)} likes`
+                  ? pluralize(likesCount, "like")
                   : compactCount(likesCount)}
               </span>
             </button>
@@ -450,7 +450,7 @@ function PostCard({
               <MessageCircle className="size-5" aria-hidden="true" />
               <span className="tnum">
                 {isDetail
-                  ? `${compactCount(post.commentsCount ?? 0)} comments`
+                  ? pluralize(post.commentsCount ?? 0, "comment")
                   : compactCount(post.commentsCount ?? 0)}
               </span>
             </Link>

@@ -63,7 +63,7 @@ function UserCard({
       <Link
         to={profileHref}
         className="shrink-0 rounded-full"
-        aria-label={`@${username} profili`}
+        aria-label={`@${username} profile`}
       >
         <Avatar
           src={user.avatar?.url}
@@ -74,7 +74,14 @@ function UserCard({
       </Link>
 
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-baseline gap-1.5 text-sm">
+        {/*
+         * On narrow viewports the inline name + @handle competes with the
+         * trailing follow button (which is wider when "Following"), causing
+         * both to truncate awkwardly to e.g. "Marcus Re…" / "@marcus_re…".
+         * Stack vertically by default and only inline at >= sm where there
+         * is enough horizontal room to comfortably fit both.
+         */}
+        <div className="flex min-w-0 flex-col text-sm sm:flex-row sm:items-baseline sm:gap-1.5">
           <Link
             to={profileHref}
             className="truncate font-semibold text-zinc-900 hover:underline dark:text-zinc-50"

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 
+import Spinner from "../ui/Spinner.jsx";
 import Footer from "./Footer.jsx";
 import Navbar from "./Navbar.jsx";
 import ScrollToTop from "./ScrollToTop.jsx";
@@ -91,7 +92,15 @@ export default function AdminLayout() {
           </header>
 
           <main id="main" tabIndex={-1} className="flex-1 pb-20 md:pb-6">
-            <Outlet />
+            <Suspense
+              fallback={
+                <div className="flex min-h-[40vh] items-center justify-center">
+                  <Spinner label="Loading admin page" />
+                </div>
+              }
+            >
+              <Outlet />
+            </Suspense>
           </main>
         </div>
       </div>

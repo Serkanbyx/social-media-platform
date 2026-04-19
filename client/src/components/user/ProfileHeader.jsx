@@ -110,9 +110,16 @@ function ProfileHeader({
   const followersHref = `/u/${username}/followers`;
   const followingHref = `/u/${username}/following`;
 
-  const followersCount = compactCount(profile.followersCount ?? 0);
-  const followingCount = compactCount(profile.followingCount ?? 0);
-  const postsCount = compactCount(profile.postsCount ?? 0);
+  const followersRaw = profile.followersCount ?? 0;
+  const followingRaw = profile.followingCount ?? 0;
+  const postsRaw = profile.postsCount ?? 0;
+  const followersCount = compactCount(followersRaw);
+  const followingCount = compactCount(followingRaw);
+  const postsCount = compactCount(postsRaw);
+  // Use singular labels when the raw value is exactly one. "Following"
+  // is intentionally invariant — it's a verb form, not a count noun.
+  const postsLabel = postsRaw === 1 ? "Post" : "Posts";
+  const followersLabel = followersRaw === 1 ? "Follower" : "Followers";
 
   return (
     <header
@@ -218,7 +225,7 @@ function ProfileHeader({
             <span className="font-semibold text-zinc-900 tnum dark:text-zinc-50">
               {postsCount}
             </span>
-            <span className="text-zinc-500 dark:text-zinc-400">Posts</span>
+            <span className="text-zinc-500 dark:text-zinc-400">{postsLabel}</span>
           </li>
           <li>
             <Link
@@ -228,7 +235,7 @@ function ProfileHeader({
               <span className="font-semibold text-zinc-900 tnum dark:text-zinc-50">
                 {followersCount}
               </span>
-              <span className="text-zinc-500 dark:text-zinc-400">Followers</span>
+              <span className="text-zinc-500 dark:text-zinc-400">{followersLabel}</span>
             </Link>
           </li>
           <li>
