@@ -254,6 +254,30 @@
   }
 }
 
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-8deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer utilities {
   .animate-like-pop {
     animation: like-pop var(--duration-spring) var(--ease-spring);
@@ -270,6 +294,13 @@
   .animate-shrink-out {
     animation: shrink-out 180ms var(--ease-out-quart) forwards;
     overflow: hidden;
+  }
+  .animate-wiggle {
+    animation: wiggle 400ms var(--ease-out-quart);
+    transform-origin: 50% 0;
+  }
+  .animate-slide-down {
+    animation: slide-down 180ms var(--ease-out-quart);
   }
 }
 

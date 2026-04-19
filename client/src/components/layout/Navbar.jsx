@@ -23,6 +23,7 @@ import * as userService from "../../services/userService.js";
 import { SEARCH_DEBOUNCE_MS } from "../../utils/constants.js";
 import logoUrl from "../../assets/logo.svg";
 import Avatar from "../ui/Avatar.jsx";
+import NotificationBell from "../notification/NotificationBell.jsx";
 
 /**
  * Navbar — top bar on every viewport plus a mobile-only bottom tab bar.
@@ -66,26 +67,6 @@ function UnreadBadge({ count }) {
     <span className="absolute -right-1 -top-1 inline-flex min-w-[1.05rem] items-center justify-center rounded-full bg-rose-500 px-1 text-2xs font-semibold leading-4 text-white ring-2 ring-white dark:ring-zinc-950">
       {count > 99 ? "99+" : count}
     </span>
-  );
-}
-
-function NotificationBell({ unreadCount }) {
-  return (
-    <NavLink
-      to="/notifications"
-      aria-label={`Bildirimler${unreadCount ? `, ${unreadCount} okunmamış` : ""}`}
-      className={({ isActive }) =>
-        [
-          "relative inline-flex size-9 items-center justify-center rounded-full transition-colors duration-fast",
-          isActive
-            ? "bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300"
-            : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
-        ].join(" ")
-      }
-    >
-      <Bell className="size-5" aria-hidden="true" />
-      <UnreadBadge count={unreadCount} />
-    </NavLink>
   );
 }
 
@@ -491,7 +472,7 @@ export default function Navbar() {
               <Search className="size-5" aria-hidden="true" />
             </button>
 
-            {user && <NotificationBell unreadCount={unreadCount} />}
+            {user && <NotificationBell />}
 
             {user ? (
               <UserMenu user={user} onLogout={handleLogout} />
