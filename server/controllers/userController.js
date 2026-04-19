@@ -8,6 +8,12 @@ import escapeRegex from "../utils/escapeRegex.js";
 // follower/following arrays, or counters that aren't part of the card view.
 const MINI_PROFILE_FIELDS = "username name avatar";
 
+// Followers / following list rows additionally carry `bio` so the
+// `UserCard` row can show a one-line bio, and (when the viewer is signed
+// in) a per-row `isFollowing` flag so the inline Follow button knows which
+// state to render without an extra round trip.
+const FOLLOW_LIST_FIELDS = "username name avatar bio";
+
 // Pagination defaults for the followers / following lists. The hard cap of
 // 50 protects the DB from unbounded queries when a malicious client sends
 // `?limit=99999`.
@@ -121,7 +127,7 @@ export const getUserByUsername = asyncHandler(async (req, res) => {
 // with the descending sort this gives stable pagination even while new
 // follows are happening. We fetch one extra row to compute `hasMore`
 // without a separate `countDocuments` query.
-const paginateUserList = async ({ ids, cursor, limit }) => {
+const paginateUserList = async ({ ids, cursor, limit, viewer }) => {
   if (!Array.isArray(ids) || ids.length === 0) {
     return { items: [], nextCursor: null, hasMore: false };
   }
@@ -134,10 +140,38 @@ const paginateUserList = async ({ ids, cursor, limit }) => {
   const docs = await User.find(filter)
     .sort({ _id: -1 })
     .limit(limit + 1)
-    .select(MINI_PROFILE_FIELDS);
+    .select(FOLLOW_LIST_FIELDS);
 
   const hasMore = docs.length > limit;
-  const items = hasMore ? docs.slice(0, limit) : docs;
+  const sliced = hasMore ? docs.slice(0, limit) : docs;
+
+  // Pre-build a Set of the viewer's followed ids so the per-row decoration
+  // is O(1) instead of an O(N*M) scan. Anonymous viewers get `isFollowing:
+  // false` everywhere — the client uses this only to decide between the
+  // "Follow" and "Following" affordances; an anonymous click is then
+  // intercepted by `FollowButton`'s `onRequireAuth` callback.
+  const followingSet = new Set(
+    Array.isArray(viewer?.following)
+      ? viewer.following.map((id) => String(id))
+      : []
+  );
+  const viewerIdStr = viewer?._id ? String(viewer._id) : null;
+
+  const items = sliced.map((doc) => {
+    const idStr = String(doc._id);
+    return {
+      _id: doc._id,
+      username: doc.username,
+      name: doc.name,
+      avatar: doc.avatar
+        ? { url: doc.avatar.url || "", publicId: doc.avatar.publicId || "" }
+        : { url: "", publicId: "" },
+      bio: doc.bio || "",
+      isFollowing: viewerIdStr ? followingSet.has(idStr) : false,
+      isSelf: viewerIdStr ? viewerIdStr === idStr : false,
+    };
+  });
+
   const nextCursor = hasMore ? String(items[items.length - 1]._id) : null;
 
   return { items, nextCursor, hasMore };
@@ -175,7 +209,12 @@ const buildFollowListHandler = (relation) =>
     const limit = resolveLimit(req.query.limit);
     const cursor = resolveCursor(req.query.cursor);
 
-    const page = await paginateUserList({ ids, cursor, limit });
+    const page = await paginateUserList({
+      ids,
+      cursor,
+      limit,
+      viewer: req.user || null,
+    });
 
     return res.json({
       status: "success",

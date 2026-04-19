@@ -1,14 +1,13 @@
-import { useParams } from "react-router-dom";
+import FollowListView from "./FollowListView.jsx";
 
-import PlaceholderPage from "../_PlaceholderPage.jsx";
-
+/**
+ * FollowersPage — `/u/:username/followers` route shell (STEP 33).
+ *
+ * The page itself is intentionally trivial: all of the data fetching,
+ * tab switching and list logic lives in `FollowListView`, which is
+ * shared with `FollowingPage` so the two surfaces stay visually and
+ * behaviourally identical.
+ */
 export default function FollowersPage() {
-  const { username } = useParams();
-  return (
-    <PlaceholderPage
-      title={`@${username} · Takipçiler`}
-      description="Bu kullanıcıyı takip edenlerin listesi burada gösterilecek."
-      step="STEP 30"
-    />
-  );
+  return <FollowListView tab="followers" />;
 }
