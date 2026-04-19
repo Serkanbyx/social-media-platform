@@ -208,6 +208,27 @@ export default function AuthShell({ title, subtitle, children, footer }) {
             </a>
             .
           </p>
+
+          <p className="mt-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
+            Created by{" "}
+            <a
+              href="https://serkanbayraktar.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-zinc-600 underline-offset-2 hover:text-brand-600 hover:underline dark:text-zinc-300 dark:hover:text-brand-400"
+            >
+              Serkanby
+            </a>{" "}
+            |{" "}
+            <a
+              href="https://github.com/Serkanbyx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-zinc-600 underline-offset-2 hover:text-brand-600 hover:underline dark:text-zinc-300 dark:hover:text-brand-400"
+            >
+              Github
+            </a>
+          </p>
         </div>
       </main>
     </div>

@@ -1,5 +1,7 @@
 import { ExternalLink } from "lucide-react";
 
+import Sign from "./Sign.jsx";
+
 const FOOTER_LINKS = [
   { href: "#", label: "About" },
   { href: "#", label: "Privacy" },
@@ -7,14 +9,16 @@ const FOOTER_LINKS = [
 ];
 
 /**
- * Footer — minimal, single-line on desktop. Hidden on mobile because the
- * bottom tab bar would otherwise overlap it; that's also why the parent
- * `MainLayout` adds bottom padding only on small screens.
+ * Footer — minimal, single-line on desktop with an always-visible author
+ * signature row underneath. The richer link strip is hidden on mobile to
+ * avoid clutter beside the fixed bottom tab bar, but the `Sign` line is
+ * shown on every breakpoint with extra bottom spacing on small screens
+ * so it never gets obscured by the tab bar.
  */
 export default function Footer() {
   return (
-    <footer className="mt-12 hidden border-t border-zinc-200 py-6 text-xs text-zinc-500 md:block dark:border-zinc-800">
-      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6">
+    <footer className="mt-12 border-t border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
+      <div className="mx-auto hidden max-w-5xl flex-col items-center justify-between gap-2 px-4 py-6 sm:flex-row sm:px-6 md:flex">
         <p>
           Pulse · © {new Date().getFullYear()} — one feeling, one post at a time.
         </p>
@@ -43,6 +47,8 @@ export default function Footer() {
           </li>
         </ul>
       </div>
+
+      <Sign />
     </footer>
   );
 }
