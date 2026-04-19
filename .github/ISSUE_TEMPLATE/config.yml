@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability
+    url: https://github.com/serkanaltuntas/s4.14_Social-Media-Platform/security/policy
+    about: Please report security vulnerabilities through our security policy
+  - name: Questions & Discussions
+    url: https://github.com/serkanaltuntas/s4.14_Social-Media-Platform/discussions
+    about: Ask questions and discuss ideas in GitHub Discussions
