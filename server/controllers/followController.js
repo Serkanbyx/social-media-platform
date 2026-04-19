@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+import env from "../config/env.js";
 import User from "../models/User.js";
 import { createAndEmit } from "../services/notificationService.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -103,7 +104,9 @@ export const toggleFollow = asyncHandler(async (req, res) => {
       type: "follow",
     });
   } catch (err) {
-    console.error("[notification] failed to emit follow notification:", err);
+    if (!env.isProduction) {
+      console.error("[notification] failed to emit follow notification:", err);
+    }
   }
 
   const fresh = await User.findById(targetId).select("followersCount");

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+import env from "../config/env.js";
 import Post from "../models/Post.js";
 import { createAndEmit } from "../services/notificationService.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -96,7 +97,9 @@ export const toggleLike = asyncHandler(async (req, res) => {
       post: post._id,
     });
   } catch (err) {
-    console.error("[notification] failed to emit like notification:", err);
+    if (!env.isProduction) {
+      console.error("[notification] failed to emit like notification:", err);
+    }
   }
 
   return res.json({

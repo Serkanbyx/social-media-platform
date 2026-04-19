@@ -90,8 +90,11 @@ initSocket(server);
 const start = async () => {
   await connectDB();
   server.listen(env.PORT, () => {
-    console.log(`[server] API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
-    console.log(`[server] Socket.io ready on the same port`);
+    if (!env.isProduction) {
+      console.log(
+        `[server] API listening on http://localhost:${env.PORT} (${env.NODE_ENV}) — Socket.io attached`
+      );
+    }
   });
 };
 
@@ -101,9 +104,10 @@ start().catch((error) => {
 });
 
 const shutdown = (signal) => {
-  console.log(`[server] ${signal} received. Closing HTTP server...`);
+  if (!env.isProduction) {
+    console.log(`[server] ${signal} received. Closing HTTP server...`);
+  }
   server.close(() => {
-    console.log("[server] HTTP server closed. Bye.");
     process.exit(0);
   });
 };

@@ -13,7 +13,9 @@ export const connectDB = async () => {
     const conn = await mongoose.connect(env.MONGO_URI, {
       serverSelectionTimeoutMS: 10_000,
     });
-    console.log(`[db] MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
+    if (!env.isProduction) {
+      console.log(`[db] MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
+    }
     return conn;
   } catch (error) {
     console.error("[db] MongoDB connection failed:", error.message);
@@ -22,11 +24,11 @@ export const connectDB = async () => {
 };
 
 mongoose.connection.on("disconnected", () => {
-  console.warn("[db] MongoDB disconnected.");
+  if (!env.isProduction) console.warn("[db] MongoDB disconnected.");
 });
 
 mongoose.connection.on("reconnected", () => {
-  console.log("[db] MongoDB reconnected.");
+  if (!env.isProduction) console.log("[db] MongoDB reconnected.");
 });
 
 export default connectDB;

@@ -52,7 +52,9 @@ export const destroyByPublicId = async (publicId) => {
   try {
     return await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
   } catch (error) {
-    console.error(`[cloudinary] destroy failed for ${publicId}:`, error?.message || error);
+    if (!env.isProduction) {
+      console.error(`[cloudinary] destroy failed for ${publicId}:`, error?.message || error);
+    }
     return { result: "error" };
   }
 };

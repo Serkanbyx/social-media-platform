@@ -206,7 +206,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
             >
               Kullanım Şartları
             </a>
-            'nı kabul etmiş olursun.
+            &apos;nı kabul etmiş olursun.
           </p>
         </div>
       </main>

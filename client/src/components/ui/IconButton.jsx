@@ -47,7 +47,7 @@ const IconButton = forwardRef(function IconButton(
   ref
 ) {
   if (import.meta.env?.DEV && !ariaLabel) {
-    // eslint-disable-next-line no-console
+     
     console.warn("[IconButton] aria-label is required for icon-only buttons.");
   }
 

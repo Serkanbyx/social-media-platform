@@ -76,7 +76,7 @@ export const errorHandler = (err, req, res, _next) => {
     payload.stack = err?.stack;
   }
 
-  if (statusCode >= 500) {
+  if (statusCode >= 500 && !env.isProduction) {
     console.error(`[error] ${req.method} ${req.originalUrl}`, err);
   }
 

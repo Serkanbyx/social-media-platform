@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+import env from "../config/env.js";
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
 import { createAndEmit } from "../services/notificationService.js";
@@ -78,7 +79,9 @@ export const createComment = asyncHandler(async (req, res) => {
       post: post._id,
     });
   } catch (err) {
-    console.error("[notification] failed to emit comment notification:", err);
+    if (!env.isProduction) {
+      console.error("[notification] failed to emit comment notification:", err);
+    }
   }
 
   return res.status(201).json({ status: "success", comment });

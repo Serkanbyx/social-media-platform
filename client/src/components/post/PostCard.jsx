@@ -400,7 +400,7 @@ function PostCard({
                   alt={altText}
                   loading={priority ? "eager" : "lazy"}
                   decoding="async"
-                  fetchpriority={priority ? "high" : "auto"}
+                  fetchPriority={priority ? "high" : "auto"}
                   referrerPolicy="no-referrer"
                   onLoad={handleImageLoad}
                   onError={() => setImageBroken(true)}
