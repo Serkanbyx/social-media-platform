@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Flame, Search, SearchX, Users, X } from "lucide-react";
+import { Clock, Flame, Search, SearchX, Users, X } from "lucide-react";
 
 import Button from "../../components/ui/Button.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
@@ -8,6 +8,7 @@ import IconButton from "../../components/ui/IconButton.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Modal from "../../components/ui/Modal.jsx";
 import Spinner from "../../components/ui/Spinner.jsx";
+import Tabs from "../../components/ui/Tabs.jsx";
 import PostCardSkeleton from "../../components/ui/skeletons/PostCardSkeleton.jsx";
 import UserCardSkeleton from "../../components/ui/skeletons/UserCardSkeleton.jsx";
 
@@ -63,6 +64,16 @@ const TRENDING_BADGE_LIMIT = 10;
 const SUGGESTED_PEOPLE_LIMIT = 8;
 const SUGGESTED_PEOPLE_SKELETON_COUNT = 4;
 
+// Sort modes for the posts feed. `trending` ranks by engagement inside a
+// 90-day window; `latest` is strict reverse-chronological across all
+// posts so a brand-new share always lands at the top of the page.
+const SORT_TRENDING = "trending";
+const SORT_LATEST = "latest";
+const VALID_SORTS = new Set([SORT_TRENDING, SORT_LATEST]);
+
+const sanitizeSort = (value) =>
+  VALID_SORTS.has(value) ? value : SORT_TRENDING;
+
 const sanitizeQuery = (value) => {
   if (typeof value !== "string") return "";
   return value.slice(0, MAX_QUERY_LENGTH);
@@ -74,9 +85,20 @@ export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const urlQuery = sanitizeQuery(searchParams.get("q") || "");
+  const urlSort = sanitizeSort(searchParams.get("sort") || "");
 
   const [query, setQuery] = useState(urlQuery);
   const debouncedQuery = useDebounce(query.trim(), SEARCH_DEBOUNCE_MS);
+
+  // Sort tab state. Mirrored to ?sort= in the URL for shareable deep links
+  // (the same pattern used by `q`). Search results ignore the sort because
+  // server-side search already orders results by relevance / recency.
+  const [sort, setSort] = useState(urlSort);
+  const [prevUrlSort, setPrevUrlSort] = useState(urlSort);
+  if (urlSort !== prevUrlSort) {
+    setPrevUrlSort(urlSort);
+    if (urlSort !== sort) setSort(urlSort);
+  }
 
   // URL → state sync done during render (React's recommended pattern for
   // mirroring an external value). Only adopt the URL value when it differs
@@ -120,23 +142,54 @@ export default function ExplorePage() {
   // can surface a subtle spinner inside the input's right addon.
   const pendingDebounce = query.trim() !== debouncedQuery;
 
-  useDocumentTitle(hasQuery ? `Search: "${activeQuery}"` : "Explore");
+  useDocumentTitle(
+    hasQuery
+      ? `Search: "${activeQuery}"`
+      : sort === SORT_LATEST
+        ? "Explore · Latest"
+        : "Explore · Trending"
+  );
 
-  // ----- URL sync (debounced query <-> ?q=) -----
+  const isLatest = !hasQuery && sort === SORT_LATEST;
+  const isTrending = !hasQuery && sort === SORT_TRENDING;
+
+  const sortTabs = useMemo(
+    () => [
+      { id: SORT_TRENDING, label: "Trending", icon: Flame },
+      { id: SORT_LATEST, label: "Latest", icon: Clock },
+    ],
+    []
+  );
+
+  const handleSortChange = useCallback((nextSort) => {
+    setSort((prev) =>
+      prev === sanitizeSort(nextSort) ? prev : sanitizeSort(nextSort)
+    );
+  }, []);
+
+  // ----- URL sync (debounced query / sort <-> ?q= / ?sort=) -----
   // Bidirectional: typing updates the URL (debounced, replace history so
   // each keystroke isn't a back-button trap), and an external URL change
-  // (e.g. a hashtag link in PostCard) updates the input.
+  // (e.g. a hashtag link in PostCard) updates the input. Sort follows the
+  // same pattern so a "latest" view can be deep-linked.
   useEffect(() => {
-    const current = sanitizeQuery(searchParams.get("q") || "");
-    if (current === activeQuery) return;
+    const currentQuery = sanitizeQuery(searchParams.get("q") || "");
+    const currentSort = sanitizeSort(searchParams.get("sort") || "");
+    if (currentQuery === activeQuery && currentSort === sort) return;
+
     const next = new URLSearchParams(searchParams);
     if (activeQuery) {
       next.set("q", activeQuery);
     } else {
       next.delete("q");
     }
+    if (sort === SORT_LATEST) {
+      next.set("sort", SORT_LATEST);
+    } else {
+      next.delete("sort");
+    }
     setSearchParams(next, { replace: true });
-  }, [activeQuery, searchParams, setSearchParams]);
+  }, [activeQuery, sort, searchParams, setSearchParams]);
 
   // Reset the "view all" toggle and prime people-panel state whenever the
   // active query changes — otherwise expansion silently carries over and
@@ -170,11 +223,13 @@ export default function ExplorePage() {
 
   useEffect(() => {
     let cancelled = false;
+    setInitialLoading(true);
     (async () => {
       try {
         const data = await postService.explorePosts({
           limit: EXPLORE_PAGE_LIMIT,
           q: activeQuery || undefined,
+          sort: hasQuery ? undefined : sort,
         });
         if (cancelled) return;
         setPosts(Array.isArray(data?.items) ? data.items : []);
@@ -193,7 +248,7 @@ export default function ExplorePage() {
     return () => {
       cancelled = true;
     };
-  }, [activeQuery, postsRetryToken]);
+  }, [activeQuery, hasQuery, sort, postsRetryToken]);
 
   // ----- Pagination -----
   const handleLoadMore = useCallback(async () => {
@@ -204,6 +259,7 @@ export default function ExplorePage() {
         cursor: nextCursor,
         limit: EXPLORE_PAGE_LIMIT,
         q: activeQuery || undefined,
+        sort: hasQuery ? undefined : sort,
       });
       const incoming = Array.isArray(data?.items) ? data.items : [];
       setPosts((prev) => {
@@ -220,7 +276,7 @@ export default function ExplorePage() {
     } finally {
       setPaginating(false);
     }
-  }, [activeQuery, hasMore, nextCursor, paginating]);
+  }, [activeQuery, hasQuery, hasMore, nextCursor, paginating, sort]);
 
   const sentinelRef = useInfiniteScroll({
     hasMore,
@@ -508,7 +564,17 @@ export default function ExplorePage() {
           </section>
         )}
 
-      {/* ----- Posts header (Trending or Search results) ----- */}
+      {/* ----- Sort tabs (only when no active search) ----- */}
+      {!hasQuery && (
+        <Tabs
+          tabs={sortTabs}
+          value={sort}
+          onChange={handleSortChange}
+          ariaLabel="Sort explore feed"
+        />
+      )}
+
+      {/* ----- Posts header (Trending / Latest / Search results) ----- */}
       <section
         aria-labelledby="explore-posts-title"
         className="space-y-4"
@@ -529,6 +595,22 @@ export default function ExplorePage() {
                 </span>
               </p>
             </>
+          ) : isLatest ? (
+            <>
+              <h2
+                id="explore-posts-title"
+                className="flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-zinc-50"
+              >
+                <Clock
+                  className="size-5 text-brand-500 dark:text-brand-400"
+                  aria-hidden="true"
+                />
+                Latest posts
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Every post on Pulse, newest first
+              </p>
+            </>
           ) : (
             <>
               <h2
@@ -542,7 +624,7 @@ export default function ExplorePage() {
                 Trending posts
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Standout posts from the last 7 days
+                Standout posts from the last 90 days
               </p>
             </>
           )}
@@ -579,11 +661,22 @@ export default function ExplorePage() {
               title="No results found"
               description="Try searching with a different keyword."
             />
+          ) : isLatest ? (
+            <EmptyState
+              icon={Clock}
+              title="No posts yet"
+              description="Be the first to share a post and kick things off."
+              action={
+                user
+                  ? { label: "Create post", href: "/posts/new" }
+                  : { label: "Sign in", href: "/login" }
+              }
+            />
           ) : (
             <EmptyState
               icon={Flame}
               title="Nothing trending yet"
-              description="Be the first to share a post and kick things off."
+              description="Try the Latest tab to see brand-new posts."
               action={
                 user
                   ? { label: "Create post", href: "/posts/new" }
@@ -612,7 +705,7 @@ export default function ExplorePage() {
                   key={post._id}
                   className="transition-all duration-base hover:-translate-y-0.5 hover:shadow-md motion-safe:animate-fade-up"
                 >
-                  {index < TRENDING_BADGE_LIMIT && (
+                  {isTrending && index < TRENDING_BADGE_LIMIT && (
                     <div className="mb-1.5 flex items-center gap-1 px-1 text-2xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
                       <Flame className="size-3" aria-hidden="true" />
                       <span>Trending</span>

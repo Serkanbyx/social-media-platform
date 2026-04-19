@@ -51,9 +51,15 @@ export const explorePosts = async ({
   cursor,
   limit = EXPLORE_PAGE_LIMIT,
   q,
+  sort,
 } = {}) => {
   const { data } = await api.get("/posts/explore", {
-    params: { cursor, limit: clampLimit(limit, EXPLORE_PAGE_LIMIT), q },
+    params: {
+      cursor,
+      limit: clampLimit(limit, EXPLORE_PAGE_LIMIT),
+      q,
+      sort,
+    },
   });
   return data;
 };

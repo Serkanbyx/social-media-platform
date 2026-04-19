@@ -21,7 +21,11 @@ const MAX_PAGE_SIZE = 30;
 
 // Trending window — a post counts as "trending" only while it's fresh.
 // Anything older than this rolls off the explore feed regardless of likes.
-const TRENDING_WINDOW_DAYS = 7;
+// 90 days is a generous discovery window: long enough that small or new
+// communities still surface meaningful content, short enough that ancient
+// viral posts don't dominate the page forever. The "Latest" view ignores
+// this window entirely so brand-new posts always have somewhere to land.
+const TRENDING_WINDOW_DAYS = 90;
 
 // Resolve the page size from a query param, clamping into [1, MAX_PAGE_SIZE].
 // Falls back to DEFAULT_PAGE_SIZE for any non-numeric / out-of-range input.
@@ -231,21 +235,36 @@ export const getPostsByUsername = asyncHandler(async (req, res) => {
 });
 
 // GET /api/posts/explore
-// Trending feed: posts created in the last 7 days, ranked by likesCount and
-// then by recency. Optional full-text search via `?q=` runs as an escaped
-// regex on the `content` field (case-insensitive, ReDoS-safe).
+//
+// Two related discovery feeds, selected via `?sort=`:
+//  - `trending` (default) — posts from the last `TRENDING_WINDOW_DAYS`,
+//    ranked by likesCount then recency. The 90-day window keeps the page
+//    fresh without burying small communities.
+//  - `latest` — strict reverse-chronological order across ALL active
+//    posts. No time window, no likes ranking. This is the answer to
+//    "I just posted and don't see it" — brand-new posts land at the top
+//    immediately.
+//
+// Optional full-text search via `?q=` runs as an escaped regex on the
+// `content` field (case-insensitive, ReDoS-safe) for both sort modes.
 export const explorePosts = asyncHandler(async (req, res) => {
   const limit = resolveLimit(req.query.limit);
   const cursor = resolveCursor(req.query.cursor);
   const rawQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
 
-  const since = new Date(Date.now() - TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const sort = req.query.sort === "latest" ? "latest" : "trending";
 
   const filter = {
     isHidden: false,
-    createdAt: { $gte: since },
     ...(cursor ? { _id: { $lt: cursor } } : {}),
   };
+
+  if (sort === "trending") {
+    const since = new Date(
+      Date.now() - TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    );
+    filter.createdAt = { $gte: since };
+  }
 
   if (rawQuery.length > 0) {
     // `escapeRegex` neutralises every regex metacharacter and clamps length —
@@ -253,11 +272,16 @@ export const explorePosts = asyncHandler(async (req, res) => {
     filter.content = { $regex: escapeRegex(rawQuery), $options: "i" };
   }
 
-  // Sorting on `_id` last gives us a deterministic tiebreaker so the cursor
-  // (`_id < lastId`) approximates a stable page boundary even when many
-  // posts share the same likesCount.
+  // Sorting on `_id` last (or only) keeps cursor pagination deterministic:
+  // since ObjectId encodes a creation timestamp, `_id DESC` is equivalent
+  // to "newest first" and the cursor (`_id < lastId`) gives stable pages.
+  const sortSpec =
+    sort === "latest"
+      ? { _id: -1 }
+      : { likesCount: -1, createdAt: -1, _id: -1 };
+
   const docs = await Post.find(filter)
-    .sort({ likesCount: -1, createdAt: -1, _id: -1 })
+    .sort(sortSpec)
     .limit(limit + 1)
     .populate("author", AUTHOR_PUBLIC_FIELDS);
 
