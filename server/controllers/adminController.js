@@ -441,9 +441,11 @@ export const deleteCommentAsAdmin = asyncHandler(async (req, res) => {
 // Page-based admin listing of every post — including hidden ones, which
 // the public `/api/posts/explore` endpoint filters out. The optional
 // `?isHidden=true|false` filter lets a moderator focus on one bucket at
-// a time. The author is populated with the same public projection used
-// elsewhere so the admin table can render usernames + avatars without
-// joining client-side.
+// a time, and `?q=` runs a content substring match (case-insensitive,
+// `escapeRegex` neutralises every metacharacter so a crafted query
+// cannot pin the event loop). The author is populated with the same
+// public projection used elsewhere so the admin table can render
+// usernames + avatars without joining client-side.
 export const listAllPosts = asyncHandler(async (req, res) => {
   const page = resolveInt(req.query.page, { fallback: 1, min: 1 });
   const limit = resolveInt(req.query.limit, {
@@ -455,6 +457,11 @@ export const listAllPosts = asyncHandler(async (req, res) => {
   const filter = {};
   const isHidden = resolveBoolFilter(req.query.isHidden);
   if (typeof isHidden === "boolean") filter.isHidden = isHidden;
+
+  const rawQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (rawQuery.length > 0) {
+    filter.content = new RegExp(escapeRegex(rawQuery), "i");
+  }
 
   const [items, total] = await Promise.all([
     Post.find(filter)
@@ -481,7 +488,8 @@ export const listAllPosts = asyncHandler(async (req, res) => {
 // populated so the moderator table has enough context to triage without
 // extra round-trips. Hidden parent posts are still listed because a
 // moderator may want to clean up the comments under a freshly-hidden
-// post.
+// post. `?q=` runs a content substring match with the same regex
+// hardening as every other admin search surface.
 export const listAllComments = asyncHandler(async (req, res) => {
   const page = resolveInt(req.query.page, { fallback: 1, min: 1 });
   const limit = resolveInt(req.query.limit, {
@@ -490,14 +498,20 @@ export const listAllComments = asyncHandler(async (req, res) => {
     max: MAX_PAGE_SIZE,
   });
 
+  const filter = {};
+  const rawQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (rawQuery.length > 0) {
+    filter.content = new RegExp(escapeRegex(rawQuery), "i");
+  }
+
   const [items, total] = await Promise.all([
-    Comment.find({})
+    Comment.find(filter)
       .sort({ createdAt: -1, _id: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .populate("author", AUTHOR_PUBLIC_FIELDS)
       .populate("post", "content isHidden createdAt"),
-    Comment.countDocuments({}),
+    Comment.countDocuments(filter),
   ]);
 
   return res.json({

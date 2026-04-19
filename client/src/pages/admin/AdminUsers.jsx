@@ -1,11 +1,722 @@
-import PlaceholderPage from "../_PlaceholderPage.jsx";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Link } from "react-router-dom";
+import {
+  Filter,
+  MoreHorizontal,
+  Shield,
+  ShieldOff,
+  Trash2,
+  Users as UsersIcon,
+} from "lucide-react";
+
+import AdminFiltersBar from "../../components/admin/AdminFiltersBar.jsx";
+import AdminPagination from "../../components/admin/AdminPagination.jsx";
+import AdminSelect from "../../components/admin/AdminSelect.jsx";
+
+import Avatar from "../../components/ui/Avatar.jsx";
+import Badge from "../../components/ui/Badge.jsx";
+import Button from "../../components/ui/Button.jsx";
+import ConfirmModal from "../../components/ui/ConfirmModal.jsx";
+import Dropdown from "../../components/ui/Dropdown.jsx";
+import EmptyState from "../../components/ui/EmptyState.jsx";
+import IconButton from "../../components/ui/IconButton.jsx";
+import ToggleSwitch from "../../components/ui/ToggleSwitch.jsx";
+import Tooltip from "../../components/ui/Tooltip.jsx";
+import AdminTableRowSkeleton from "../../components/ui/skeletons/AdminTableRowSkeleton.jsx";
+
+import { useAuth } from "../../context/AuthContext.jsx";
+import useDebounce from "../../hooks/useDebounce.js";
+import useDocumentTitle from "../../hooks/useDocumentTitle.js";
+
+import * as adminService from "../../services/adminService.js";
+import { ADMIN_PAGE_SIZE } from "../../services/adminService.js";
+import compactCount from "../../utils/formatCount.js";
+import { formatAbsolute } from "../../utils/formatDate.js";
+import { cn } from "../../utils/cn.js";
+import notify from "../../utils/notify.js";
+
+/**
+ * AdminUsers — moderation table for the user collection (STEP 36).
+ *
+ * Filtering / pagination contract:
+ *  - `q`, `role`, `isActive` map 1:1 to the backend filters.
+ *  - Search is debounced (350ms) and resets to page 1 on every change.
+ *  - Pagination is page-based (server response includes totalPages).
+ *
+ * Mutations are optimistic where the server contract makes that safe:
+ *  - role change & active toggle PATCH back the fresh user; we reflect
+ *    the new value in local state immediately and roll back on error.
+ *  - delete pops a confirm modal first (irreversible cascade).
+ *
+ * Self / last-admin protections are enforced server-side; the UI mirrors
+ * them by disabling controls and surfacing a tooltip explaining why so
+ * the admin doesn't waste a click on a guaranteed 400.
+ */
+
+const SEARCH_DEBOUNCE_MS = 350;
+
+const ROLE_OPTIONS = [
+  { value: "all", label: "Tüm roller" },
+  { value: "user", label: "Kullanıcı" },
+  { value: "admin", label: "Admin" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "Tüm durumlar" },
+  { value: "true", label: "Aktif" },
+  { value: "false", label: "Devre dışı" },
+];
+
+const ROW_COLUMNS = 7;
 
 export default function AdminUsers() {
+  useDocumentTitle("Yönetim · Kullanıcılar");
+
+  const { user: viewer } = useAuth();
+  const viewerId = viewer ? String(viewer._id) : "";
+
+  // ---------- Filters ----------
+  const [search, setSearch] = useState("");
+  const [role, setRole] = useState("all");
+  const [status, setStatus] = useState("all");
+  const debouncedSearch = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
+
+  const hasActiveFilters =
+    debouncedSearch.length > 0 || role !== "all" || status !== "all";
+
+  const handleResetFilters = useCallback(() => {
+    setSearch("");
+    setRole("all");
+    setStatus("all");
+  }, []);
+
+  // ---------- Data ----------
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const requestIdRef = useRef(0);
+
+  const fetchUsers = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setLoading(true);
+    setError("");
+    try {
+      const data = await adminService.listUsers({
+        page,
+        limit: ADMIN_PAGE_SIZE,
+        q: debouncedSearch || undefined,
+        role: role === "all" ? undefined : role,
+        isActive: status === "all" ? undefined : status,
+      });
+      if (requestIdRef.current !== requestId) return;
+      setItems(Array.isArray(data?.items) ? data.items : []);
+      setTotal(typeof data?.total === "number" ? data.total : 0);
+      setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
+    } catch {
+      if (requestIdRef.current !== requestId) return;
+      setError("Kullanıcılar yüklenemedi.");
+      setItems([]);
+      setTotal(0);
+      setTotalPages(1);
+    } finally {
+      if (requestIdRef.current === requestId) setLoading(false);
+    }
+  }, [debouncedSearch, page, role, status]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Reset to first page whenever the filter context changes — a moderator
+  // searching from page 17 should not stay on page 17 of the new filter.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, role, status]);
+
+  // Track admin head-count locally so the UI can mirror the
+  // "at least one active admin must remain" server rule. We only know
+  // the admins on the *current page*, so the safest approximation is
+  // "if there's a single active admin in the visible rows AND it's a
+  // demote/disable, warn". The server is still authoritative.
+  const activeAdminCount = useMemo(
+    () => items.filter((u) => u.role === "admin" && u.isActive).length,
+    [items]
+  );
+
+  // ---------- Mutations ----------
+  const updateLocalUser = useCallback((id, patch) => {
+    setItems((prev) =>
+      prev.map((row) => (String(row._id) === String(id) ? { ...row, ...patch } : row))
+    );
+  }, []);
+
+  const handleRoleChange = useCallback(
+    async (target, nextRole) => {
+      if (!target || target.role === nextRole) return;
+
+      const previousRole = target.role;
+      updateLocalUser(target._id, { role: nextRole });
+      try {
+        await adminService.updateUserRole(target._id, nextRole);
+        notify.success(
+          nextRole === "admin"
+            ? `@${target.username} yönetici yapıldı.`
+            : `@${target.username} kullanıcıya çevrildi.`
+        );
+      } catch (err) {
+        updateLocalUser(target._id, { role: previousRole });
+        const message =
+          err?.response?.data?.message || "Rol değiştirilemedi.";
+        notify.error(message);
+      }
+    },
+    [updateLocalUser]
+  );
+
+  const handleActiveToggle = useCallback(
+    async (target, nextActive) => {
+      if (!target || target.isActive === nextActive) return;
+
+      const previousActive = target.isActive;
+      updateLocalUser(target._id, { isActive: nextActive });
+      try {
+        await adminService.setUserActive(target._id, nextActive);
+        notify.success(
+          nextActive
+            ? `@${target.username} yeniden aktif.`
+            : `@${target.username} devre dışı bırakıldı.`
+        );
+      } catch (err) {
+        updateLocalUser(target._id, { isActive: previousActive });
+        const message =
+          err?.response?.data?.message || "Hesap durumu değiştirilemedi.";
+        notify.error(message);
+      }
+    },
+    [updateLocalUser]
+  );
+
+  // ---------- Delete confirmation ----------
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const closeDelete = useCallback(() => setPendingDelete(null), []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    try {
+      await adminService.deleteUser(pendingDelete._id);
+      setItems((prev) => prev.filter((row) => row._id !== pendingDelete._id));
+      setTotal((prev) => Math.max(0, prev - 1));
+      notify.success(`@${pendingDelete.username} silindi.`);
+      closeDelete();
+    } catch (err) {
+      const message =
+        err?.response?.data?.message || "Kullanıcı silinemedi.";
+      notify.error(message);
+      closeDelete();
+    }
+  }, [closeDelete, pendingDelete]);
+
+  // ---------- Render ----------
   return (
-    <PlaceholderPage
-      title="Kullanıcılar"
-      description="Tüm kullanıcıların listesi, rol değişikliği ve hesap askıya alma araçları burada olacak."
-      step="STEP 33"
+    <div className="space-y-4">
+      <AdminFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Kullanıcı adı veya isim ara"
+        searchAriaLabel="Kullanıcı ara"
+        searchPending={search.trim() !== debouncedSearch}
+        hasActiveFilters={hasActiveFilters}
+        onReset={handleResetFilters}
+        extras={
+          <>
+            <span
+              className="hidden items-center gap-1 text-xs font-medium text-zinc-500 sm:inline-flex dark:text-zinc-400"
+              aria-hidden="true"
+            >
+              <Filter className="size-3.5" />
+              Filtrele
+            </span>
+            <AdminSelect
+              label="Rol"
+              inline
+              value={role}
+              onChange={setRole}
+              options={ROLE_OPTIONS}
+            />
+            <AdminSelect
+              label="Durum"
+              inline
+              value={status}
+              onChange={setStatus}
+              options={STATUS_OPTIONS}
+            />
+          </>
+        }
+      />
+
+      {error ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+          <span>{error}</span>
+          <Button variant="secondary" size="sm" onClick={fetchUsers}>
+            Tekrar dene
+          </Button>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          {/* ------------- Desktop table ------------- */}
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-zinc-50/80 backdrop-blur dark:bg-zinc-900/80">
+                <tr className="text-left text-2xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-3">Kullanıcı</th>
+                  <th className="px-4 py-3">E-posta</th>
+                  <th className="px-4 py-3">Rol</th>
+                  <th className="px-4 py-3">Durum</th>
+                  <th className="px-4 py-3">Katılım</th>
+                  <th className="px-4 py-3 text-right">Gönderi</th>
+                  <th className="px-4 py-3 text-right">Takipçi</th>
+                  <th className="px-4 py-3 text-right">İşlem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  Array.from({ length: 8 }).map((_, idx) => (
+                    <AdminTableRowSkeleton
+                      key={`u-skel-${idx}`}
+                      columns={ROW_COLUMNS + 1}
+                    />
+                  ))
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td colSpan={ROW_COLUMNS + 1} className="px-4 py-12">
+                      <EmptyState
+                        icon={UsersIcon}
+                        title={
+                          hasActiveFilters
+                            ? "Bu filtrelerle eşleşen kullanıcı yok"
+                            : "Kullanıcı bulunamadı"
+                        }
+                        description={
+                          hasActiveFilters
+                            ? "Aramayı değiştir veya filtreleri sıfırla."
+                            : "Henüz kayıtlı kullanıcı yok."
+                        }
+                        action={
+                          hasActiveFilters
+                            ? {
+                                label: "Filtreleri sıfırla",
+                                onClick: handleResetFilters,
+                              }
+                            : undefined
+                        }
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((row) => (
+                    <UserRow
+                      key={row._id}
+                      row={row}
+                      viewerId={viewerId}
+                      activeAdminCount={activeAdminCount}
+                      onRoleChange={handleRoleChange}
+                      onActiveToggle={handleActiveToggle}
+                      onDelete={(target) => setPendingDelete(target)}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ------------- Mobile / tablet card list ------------- */}
+          <div className="lg:hidden">
+            {loading ? (
+              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <li key={`u-card-skel-${idx}`} className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 animate-pulse rounded-full bg-zinc-100 dark:bg-zinc-800" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+                        <div className="h-3 w-1/3 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : items.length === 0 ? (
+              <EmptyState
+                icon={UsersIcon}
+                title={
+                  hasActiveFilters
+                    ? "Bu filtrelerle eşleşen kullanıcı yok"
+                    : "Kullanıcı bulunamadı"
+                }
+                description={
+                  hasActiveFilters
+                    ? "Aramayı değiştir veya filtreleri sıfırla."
+                    : "Henüz kayıtlı kullanıcı yok."
+                }
+                action={
+                  hasActiveFilters
+                    ? {
+                        label: "Filtreleri sıfırla",
+                        onClick: handleResetFilters,
+                      }
+                    : undefined
+                }
+              />
+            ) : (
+              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {items.map((row) => (
+                  <UserCardRow
+                    key={row._id}
+                    row={row}
+                    viewerId={viewerId}
+                    activeAdminCount={activeAdminCount}
+                    onRoleChange={handleRoleChange}
+                    onActiveToggle={handleActiveToggle}
+                    onDelete={(target) => setPendingDelete(target)}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        loading={loading}
+        onPageChange={(next) => setPage(next)}
+      />
+
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        title="Kullanıcıyı sil"
+        description={
+          pendingDelete
+            ? `@${pendingDelete.username} kullanıcısını silmek üzeresin. Tüm gönderileri, yorumları, takipleri ve bildirimleri kalıcı olarak kaldırılacak. Bu işlem geri alınamaz.`
+            : ""
+        }
+        confirmLabel="Kalıcı olarak sil"
+        cancelLabel="Vazgeç"
+        busyLabel="Siliniyor…"
+        danger
+        onConfirm={handleConfirmDelete}
+        onCancel={closeDelete}
+      />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Row components                                                            */
+/* -------------------------------------------------------------------------- */
+
+function useRowProtections(row, viewerId, activeAdminCount) {
+  return useMemo(() => {
+    const isSelf = viewerId && String(row._id) === viewerId;
+    const isLastAdmin =
+      row.role === "admin" && row.isActive && activeAdminCount <= 1;
+
+    return {
+      isSelf,
+      isLastAdmin,
+      cannotChangeRole: isSelf || isLastAdmin,
+      cannotDisable: isSelf || isLastAdmin,
+      cannotDelete: isSelf || isLastAdmin,
+      cannotChangeRoleReason: isSelf
+        ? "Kendi rolünü değiştiremezsin."
+        : isLastAdmin
+          ? "En az bir aktif yönetici kalmalı."
+          : "",
+      cannotDisableReason: isSelf
+        ? "Kendi hesabını devre dışı bırakamazsın."
+        : isLastAdmin
+          ? "Son aktif yöneticiyi devre dışı bırakamazsın."
+          : "",
+      cannotDeleteReason: isSelf
+        ? "Kendi hesabını silemezsin."
+        : isLastAdmin
+          ? "Son aktif yöneticiyi silemezsin."
+          : "",
+    };
+  }, [activeAdminCount, row._id, row.isActive, row.role, viewerId]);
+}
+
+function RoleBadge({ role }) {
+  return role === "admin" ? (
+    <Badge variant="brand" size="sm">
+      <Shield className="mr-1 size-3" aria-hidden="true" />
+      Admin
+    </Badge>
+  ) : (
+    <Badge variant="default" size="sm">
+      Kullanıcı
+    </Badge>
+  );
+}
+
+function StatusBadge({ active }) {
+  return active ? (
+    <Badge variant="success" size="sm">
+      Aktif
+    </Badge>
+  ) : (
+    <Badge variant="default" size="sm">
+      Devre dışı
+    </Badge>
+  );
+}
+
+function RowActions({
+  row,
+  protections,
+  onRoleChange,
+  onActiveToggle,
+  onDelete,
+}) {
+  const items = [
+    {
+      key: "toggle-role",
+      label:
+        row.role === "admin" ? "Yöneticiliği geri al" : "Yönetici yap",
+      icon: row.role === "admin" ? ShieldOff : Shield,
+      disabled: protections.cannotChangeRole,
+      onClick: () =>
+        onRoleChange(row, row.role === "admin" ? "user" : "admin"),
+    },
+    {
+      key: "toggle-active",
+      label: row.isActive ? "Hesabı devre dışı bırak" : "Hesabı yeniden aktive et",
+      icon: row.isActive ? ShieldOff : Shield,
+      disabled: protections.cannotDisable,
+      onClick: () => onActiveToggle(row, !row.isActive),
+    },
+    { divider: true },
+    {
+      key: "delete",
+      label: "Kullanıcıyı sil",
+      icon: Trash2,
+      danger: true,
+      disabled: protections.cannotDelete,
+      onClick: () => onDelete(row),
+    },
+  ];
+
+  return (
+    <Dropdown
+      align="end"
+      width="w-56"
+      trigger={
+        <IconButton
+          icon={MoreHorizontal}
+          variant="ghost"
+          size="sm"
+          aria-label={`@${row.username} işlemleri`}
+        />
+      }
+      items={items}
     />
+  );
+}
+
+function UserRow({
+  row,
+  viewerId,
+  activeAdminCount,
+  onRoleChange,
+  onActiveToggle,
+  onDelete,
+}) {
+  const protections = useRowProtections(row, viewerId, activeAdminCount);
+
+  return (
+    <tr
+      className={cn(
+        "border-t border-zinc-100 transition-colors duration-fast hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/40",
+        !row.isActive && "bg-zinc-50/50 dark:bg-zinc-900/40"
+      )}
+    >
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={row.avatar?.url}
+            name={row.name}
+            username={row.username}
+            size="sm"
+          />
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Link
+                to={`/u/${row.username}`}
+                className="truncate text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
+              >
+                {row.name || `@${row.username}`}
+              </Link>
+              {protections.isSelf && (
+                <Badge variant="info" size="sm">
+                  Sen
+                </Badge>
+              )}
+            </div>
+            <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+              @{row.username}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <span className="block max-w-[18ch] truncate text-zinc-700 dark:text-zinc-300">
+          {row.email}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <Tooltip content={protections.cannotChangeRoleReason}>
+          <span>
+            <AdminSelect
+              inline
+              label="Rol"
+              value={row.role}
+              disabled={protections.cannotChangeRole}
+              onChange={(value) => onRoleChange(row, value)}
+              options={[
+                { value: "user", label: "Kullanıcı" },
+                { value: "admin", label: "Admin" },
+              ]}
+            />
+          </span>
+        </Tooltip>
+      </td>
+      <td className="px-4 py-3">
+        <Tooltip content={protections.cannotDisableReason}>
+          <span className="inline-flex items-center gap-3">
+            <ToggleSwitch
+              checked={row.isActive}
+              disabled={protections.cannotDisable}
+              onChange={(next) => onActiveToggle(row, next)}
+            />
+            <StatusBadge active={row.isActive} />
+          </span>
+        </Tooltip>
+      </td>
+      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+        <time dateTime={row.createdAt} className="tnum">
+          {formatAbsolute(row.createdAt)}
+        </time>
+      </td>
+      <td className="px-4 py-3 text-right tnum text-zinc-700 dark:text-zinc-300">
+        {compactCount(row.postsCount ?? 0)}
+      </td>
+      <td className="px-4 py-3 text-right tnum text-zinc-700 dark:text-zinc-300">
+        {compactCount(row.followersCount ?? 0)}
+      </td>
+      <td className="px-4 py-3 text-right">
+        <RowActions
+          row={row}
+          protections={protections}
+          onRoleChange={onRoleChange}
+          onActiveToggle={onActiveToggle}
+          onDelete={onDelete}
+        />
+      </td>
+    </tr>
+  );
+}
+
+function UserCardRow({
+  row,
+  viewerId,
+  activeAdminCount,
+  onRoleChange,
+  onActiveToggle,
+  onDelete,
+}) {
+  const protections = useRowProtections(row, viewerId, activeAdminCount);
+
+  return (
+    <li
+      className={cn(
+        "px-4 py-4",
+        !row.isActive && "bg-zinc-50/60 dark:bg-zinc-900/40"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <Avatar
+          src={row.avatar?.url}
+          name={row.name}
+          username={row.username}
+          size="md"
+        />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Link
+              to={`/u/${row.username}`}
+              className="truncate text-sm font-semibold text-zinc-900 hover:underline dark:text-zinc-50"
+            >
+              {row.name || `@${row.username}`}
+            </Link>
+            {protections.isSelf && (
+              <Badge variant="info" size="sm">
+                Sen
+              </Badge>
+            )}
+            <RoleBadge role={row.role} />
+            <StatusBadge active={row.isActive} />
+          </div>
+          <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+            @{row.username} · {row.email}
+          </p>
+          <dl className="grid grid-cols-2 gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <div>
+              <dt className="text-2xs uppercase tracking-wide text-zinc-400">
+                Gönderi
+              </dt>
+              <dd className="tnum text-zinc-800 dark:text-zinc-200">
+                {compactCount(row.postsCount ?? 0)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-2xs uppercase tracking-wide text-zinc-400">
+                Takipçi
+              </dt>
+              <dd className="tnum text-zinc-800 dark:text-zinc-200">
+                {compactCount(row.followersCount ?? 0)}
+              </dd>
+            </div>
+            <div className="col-span-2">
+              <dt className="text-2xs uppercase tracking-wide text-zinc-400">
+                Katılım
+              </dt>
+              <dd className="tnum text-zinc-800 dark:text-zinc-200">
+                {formatAbsolute(row.createdAt)}
+              </dd>
+            </div>
+          </dl>
+        </div>
+        <RowActions
+          row={row}
+          protections={protections}
+          onRoleChange={onRoleChange}
+          onActiveToggle={onActiveToggle}
+          onDelete={onDelete}
+        />
+      </div>
+    </li>
   );
 }

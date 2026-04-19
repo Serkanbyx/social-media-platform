@@ -1,11 +1,446 @@
-import PlaceholderPage from "../_PlaceholderPage.jsx";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { Link } from "react-router-dom";
+import {
+  EyeOff,
+  ExternalLink,
+  MessageSquare,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react";
+
+import AdminFiltersBar from "../../components/admin/AdminFiltersBar.jsx";
+import AdminPagination from "../../components/admin/AdminPagination.jsx";
+
+import Avatar from "../../components/ui/Avatar.jsx";
+import Badge from "../../components/ui/Badge.jsx";
+import Button from "../../components/ui/Button.jsx";
+import ConfirmModal from "../../components/ui/ConfirmModal.jsx";
+import Dropdown from "../../components/ui/Dropdown.jsx";
+import EmptyState from "../../components/ui/EmptyState.jsx";
+import IconButton from "../../components/ui/IconButton.jsx";
+import AdminTableRowSkeleton from "../../components/ui/skeletons/AdminTableRowSkeleton.jsx";
+
+import useDebounce from "../../hooks/useDebounce.js";
+import useDocumentTitle from "../../hooks/useDocumentTitle.js";
+
+import * as adminService from "../../services/adminService.js";
+import { ADMIN_PAGE_SIZE } from "../../services/adminService.js";
+import { formatAbsolute, formatRelative } from "../../utils/formatDate.js";
+import { truncate } from "../../utils/helpers.js";
+import { cn } from "../../utils/cn.js";
+import notify from "../../utils/notify.js";
+
+/**
+ * AdminComments — moderation table for the comment collection (STEP 36).
+ *
+ * Comments are simpler than posts (no hide flag, no media) so this page
+ * is a thin wrapper around the same table chrome: search by content,
+ * paginate, delete with confirmation. Each row links back to the parent
+ * post (in a new tab) so a moderator can review the full context before
+ * acting.
+ */
+
+const SEARCH_DEBOUNCE_MS = 350;
+
+const ROW_COLUMNS = 5;
+const PREVIEW_LENGTH = 110;
 
 export default function AdminComments() {
+  useDocumentTitle("Yönetim · Yorumlar");
+
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
+
+  const hasActiveFilters = debouncedSearch.length > 0;
+
+  const handleResetFilters = useCallback(() => setSearch(""), []);
+
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const requestIdRef = useRef(0);
+
+  const fetchComments = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setLoading(true);
+    setError("");
+    try {
+      const data = await adminService.listAllComments({
+        page,
+        limit: ADMIN_PAGE_SIZE,
+        q: debouncedSearch || undefined,
+      });
+      if (requestIdRef.current !== requestId) return;
+      setItems(Array.isArray(data?.items) ? data.items : []);
+      setTotal(typeof data?.total === "number" ? data.total : 0);
+      setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
+    } catch {
+      if (requestIdRef.current !== requestId) return;
+      setError("Yorumlar yüklenemedi.");
+      setItems([]);
+      setTotal(0);
+      setTotalPages(1);
+    } finally {
+      if (requestIdRef.current === requestId) setLoading(false);
+    }
+  }, [debouncedSearch, page]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const closeDelete = useCallback(() => setPendingDelete(null), []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    try {
+      await adminService.deleteComment(pendingDelete._id);
+      setItems((prev) => prev.filter((row) => row._id !== pendingDelete._id));
+      setTotal((prev) => Math.max(0, prev - 1));
+      notify.success("Yorum silindi.");
+      closeDelete();
+    } catch (err) {
+      const message = err?.response?.data?.message || "Yorum silinemedi.";
+      notify.error(message);
+      closeDelete();
+    }
+  }, [closeDelete, pendingDelete]);
+
   return (
-    <PlaceholderPage
-      title="Yorumlar"
-      description="Bütün yorumların moderasyon listesi burada gösterilecek."
-      step="STEP 33"
-    />
+    <div className="space-y-4">
+      <AdminFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Yorum içeriğinde ara"
+        searchAriaLabel="Yorum içeriğinde ara"
+        searchPending={search.trim() !== debouncedSearch}
+        hasActiveFilters={hasActiveFilters}
+        onReset={handleResetFilters}
+      />
+
+      {error ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+          <span>{error}</span>
+          <Button variant="secondary" size="sm" onClick={fetchComments}>
+            Tekrar dene
+          </Button>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-zinc-50/80 backdrop-blur dark:bg-zinc-900/80">
+                <tr className="text-left text-2xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-3">Yorum</th>
+                  <th className="px-4 py-3">Yazar</th>
+                  <th className="px-4 py-3">Gönderi</th>
+                  <th className="px-4 py-3">Tarih</th>
+                  <th className="px-4 py-3 text-right">İşlem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  Array.from({ length: 8 }).map((_, idx) => (
+                    <AdminTableRowSkeleton
+                      key={`c-skel-${idx}`}
+                      columns={ROW_COLUMNS}
+                    />
+                  ))
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td colSpan={ROW_COLUMNS} className="px-4 py-12">
+                      <EmptyState
+                        icon={MessageSquare}
+                        title={
+                          hasActiveFilters
+                            ? "Bu aramayla eşleşen yorum yok"
+                            : "Yorum bulunamadı"
+                        }
+                        description={
+                          hasActiveFilters
+                            ? "Farklı bir kelimeyle aramayı dene veya filtreleri sıfırla."
+                            : "Henüz hiç yorum yapılmamış."
+                        }
+                        action={
+                          hasActiveFilters
+                            ? {
+                                label: "Filtreleri sıfırla",
+                                onClick: handleResetFilters,
+                              }
+                            : undefined
+                        }
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((row) => (
+                    <CommentRow
+                      key={row._id}
+                      row={row}
+                      onDelete={(target) => setPendingDelete(target)}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="lg:hidden">
+            {loading ? (
+              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <li key={`c-card-skel-${idx}`} className="px-4 py-4">
+                    <div className="space-y-2">
+                      <div className="h-3 w-3/4 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : items.length === 0 ? (
+              <EmptyState
+                icon={MessageSquare}
+                title={
+                  hasActiveFilters
+                    ? "Bu aramayla eşleşen yorum yok"
+                    : "Yorum bulunamadı"
+                }
+                description={
+                  hasActiveFilters
+                    ? "Farklı bir kelimeyle aramayı dene veya filtreleri sıfırla."
+                    : "Henüz hiç yorum yapılmamış."
+                }
+                action={
+                  hasActiveFilters
+                    ? {
+                        label: "Filtreleri sıfırla",
+                        onClick: handleResetFilters,
+                      }
+                    : undefined
+                }
+              />
+            ) : (
+              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {items.map((row) => (
+                  <CommentCardRow
+                    key={row._id}
+                    row={row}
+                    onDelete={(target) => setPendingDelete(target)}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        loading={loading}
+        onPageChange={(next) => setPage(next)}
+      />
+
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        title="Yorumu sil"
+        description="Bu yorumu kalıcı olarak silmek üzeresin. Bu işlem geri alınamaz."
+        confirmLabel="Kalıcı olarak sil"
+        cancelLabel="Vazgeç"
+        busyLabel="Siliniyor…"
+        danger
+        onConfirm={handleConfirmDelete}
+        onCancel={closeDelete}
+      />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Row components                                                            */
+/* -------------------------------------------------------------------------- */
+
+function CommentRow({ row, onDelete }) {
+  const author = row.author || {};
+  const post = row.post || null;
+  const excerpt = row.content
+    ? truncate(row.content, PREVIEW_LENGTH)
+    : "(boş yorum)";
+
+  const items = [
+    {
+      key: "view",
+      label: "Gönderiyi yeni sekmede aç",
+      icon: ExternalLink,
+      disabled: !post,
+      onClick: () => post && window.open(`/posts/${post._id}`, "_blank"),
+    },
+    { divider: true },
+    {
+      key: "delete",
+      label: "Yorumu sil",
+      icon: Trash2,
+      danger: true,
+      onClick: () => onDelete(row),
+    },
+  ];
+
+  return (
+    <tr className="border-t border-zinc-100 transition-colors duration-fast hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/40">
+      <td className="px-4 py-3">
+        <p className="max-w-md whitespace-pre-wrap break-words text-sm text-zinc-800 dark:text-zinc-100">
+          {excerpt}
+        </p>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Avatar
+            src={author.avatar?.url}
+            name={author.name}
+            username={author.username}
+            size="xs"
+          />
+          <Link
+            to={`/u/${author.username || ""}`}
+            className="truncate text-zinc-700 hover:underline dark:text-zinc-300"
+          >
+            @{author.username || "silinmiş"}
+          </Link>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        {post ? (
+          <Link
+            to={`/posts/${post._id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "block max-w-[28ch] truncate text-zinc-700 hover:underline dark:text-zinc-300",
+              post.isHidden && "italic text-zinc-500 dark:text-zinc-400"
+            )}
+          >
+            {truncate(post.content || "(boş gönderi)", 50)}
+          </Link>
+        ) : (
+          <span className="text-xs text-zinc-400">Silinmiş gönderi</span>
+        )}
+        {post?.isHidden && (
+          <Badge variant="warning" size="sm" className="mt-1">
+            <EyeOff className="mr-1 size-3" aria-hidden="true" />
+            Gizli
+          </Badge>
+        )}
+      </td>
+      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+        <time dateTime={row.createdAt} title={formatAbsolute(row.createdAt)} className="tnum">
+          {formatRelative(row.createdAt)}
+        </time>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <Dropdown
+          align="end"
+          width="w-56"
+          trigger={
+            <IconButton
+              icon={MoreHorizontal}
+              variant="ghost"
+              size="sm"
+              aria-label="Yorum işlemleri"
+            />
+          }
+          items={items}
+        />
+      </td>
+    </tr>
+  );
+}
+
+function CommentCardRow({ row, onDelete }) {
+  const author = row.author || {};
+  const post = row.post || null;
+  const excerpt = row.content
+    ? truncate(row.content, PREVIEW_LENGTH)
+    : "(boş yorum)";
+
+  return (
+    <li className="px-4 py-4">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="whitespace-pre-wrap break-words text-sm text-zinc-800 dark:text-zinc-100">
+            {excerpt}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="inline-flex items-center gap-1">
+              <Avatar
+                src={author.avatar?.url}
+                name={author.name}
+                username={author.username}
+                size="xs"
+              />
+              @{author.username || "silinmiş"}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="tnum">{formatRelative(row.createdAt)}</span>
+          </div>
+          {post && (
+            <Link
+              to={`/posts/${post._id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block truncate text-xs text-brand-600 hover:underline dark:text-brand-400"
+            >
+              ↳ {truncate(post.content || "(boş gönderi)", 60)}
+            </Link>
+          )}
+        </div>
+        <Dropdown
+          align="end"
+          width="w-56"
+          trigger={
+            <IconButton
+              icon={MoreHorizontal}
+              variant="ghost"
+              size="sm"
+              aria-label="Yorum işlemleri"
+            />
+          }
+          items={[
+            {
+              key: "view",
+              label: "Gönderiyi yeni sekmede aç",
+              icon: ExternalLink,
+              disabled: !post,
+              onClick: () => post && window.open(`/posts/${post._id}`, "_blank"),
+            },
+            { divider: true },
+            {
+              key: "delete",
+              label: "Yorumu sil",
+              icon: Trash2,
+              danger: true,
+              onClick: () => onDelete(row),
+            },
+          ]}
+        />
+      </div>
+    </li>
   );
 }

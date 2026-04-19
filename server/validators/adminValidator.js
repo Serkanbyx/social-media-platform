@@ -84,9 +84,19 @@ export const setUserActiveRules = [
 
 // Validation rules shared by `GET /api/admin/posts` and
 // `GET /api/admin/comments`. Both endpoints are page-based with the same
-// pagination clamp; the post listing additionally accepts the optional
+// pagination clamp and accept an optional `?q=` content substring
+// search; the post listing additionally accepts the optional
 // `?isHidden=true|false` filter.
 export const listPostsRules = [
+  query("q")
+    .optional()
+    .isString()
+    .withMessage("Search query must be a string.")
+    .bail()
+    .trim()
+    .isLength({ max: SEARCH_MAX })
+    .withMessage(`Search query must be at most ${SEARCH_MAX} characters.`)
+    .escape(),
   query("page")
     .optional()
     .isInt({ min: 1 })
@@ -104,6 +114,15 @@ export const listPostsRules = [
 ];
 
 export const listCommentsRules = [
+  query("q")
+    .optional()
+    .isString()
+    .withMessage("Search query must be a string.")
+    .bail()
+    .trim()
+    .isLength({ max: SEARCH_MAX })
+    .withMessage(`Search query must be at most ${SEARCH_MAX} characters.`)
+    .escape(),
   query("page")
     .optional()
     .isInt({ min: 1 })
