@@ -1,0 +1,28 @@
+# Netlify build configuration for the Vite client.
+# Repo root contains both `client/` and `server/`; this file pins the build to `client/`.
+
+[build]
+  base    = "client"
+  command = "npm ci && npm run build"
+  publish = "client/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS    = "--no-audit --no-fund"
+
+# SPA fallback — also defined in client/public/_redirects for redundancy.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# Long-cache hashed Vite assets; index.html stays no-cache so deploys propagate instantly.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
