@@ -2,10 +2,15 @@ import { ExternalLink } from "lucide-react";
 
 import Sign from "./Sign.jsx";
 
+const REPO_URL = "https://github.com/Serkanbyx/social-media-platform";
+
+// Legal/about pages don't exist as in-app routes yet; until they do, the
+// strip points at the matching documents inside the public repository so
+// the links always lead somewhere meaningful instead of nowhere.
 const FOOTER_LINKS = [
-  { href: "#", label: "About" },
-  { href: "#", label: "Privacy" },
-  { href: "#", label: "Terms" },
+  { href: `${REPO_URL}#readme`, label: "About", external: true },
+  { href: `${REPO_URL}/blob/main/SECURITY.md`, label: "Privacy", external: true },
+  { href: `${REPO_URL}/blob/main/LICENSE`, label: "Terms", external: true },
 ];
 
 /**
@@ -27,6 +32,8 @@ export default function Footer() {
             <li key={link.label}>
               <a
                 href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noreferrer noopener" : undefined}
                 className="transition-colors duration-fast hover:text-zinc-900 dark:hover:text-zinc-200"
               >
                 {link.label}
@@ -35,7 +42,7 @@ export default function Footer() {
           ))}
           <li>
             <a
-              href="https://github.com/"
+              href={REPO_URL}
               target="_blank"
               rel="noreferrer noopener"
               aria-label="GitHub repository"

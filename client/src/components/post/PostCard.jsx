@@ -297,18 +297,10 @@ function PostCard({
             <div className="flex min-w-0 items-baseline gap-1.5 text-sm">
               <Link
                 to={profileHref}
-                className="truncate font-semibold text-zinc-900 hover:underline dark:text-zinc-50"
+                className="min-w-0 truncate font-semibold text-zinc-900 hover:underline dark:text-zinc-50"
               >
                 {author.name || `@${username}`}
               </Link>
-              {author.name && (
-                <Link
-                  to={profileHref}
-                  className="truncate text-zinc-500 hover:underline dark:text-zinc-400"
-                >
-                  @{username}
-                </Link>
-              )}
               <span aria-hidden="true" className="text-zinc-400">
                 ·
               </span>
@@ -321,6 +313,14 @@ function PostCard({
                 </time>
               </Tooltip>
             </div>
+            {author.name && (
+              <Link
+                to={profileHref}
+                className="block truncate text-xs text-zinc-500 hover:underline dark:text-zinc-400"
+              >
+                @{username}
+              </Link>
+            )}
           </div>
 
           {menuItems.length > 0 && (

@@ -40,6 +40,19 @@ const colorFor = (key) => {
   return PALETTE[hash % PALETTE.length];
 };
 
+// `src` can arrive as a plain URL string OR as the Cloudinary descriptor
+// object the API ships (`{ url, publicId, ... }`). Normalise both shapes
+// to a string so callers don't accidentally render `[object Object]` in
+// the `src` attribute when they forget the `?.url` accessor.
+const resolveSrc = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && typeof value.url === "string") {
+    return value.url;
+  }
+  return "";
+};
+
 export default function Avatar({
   src,
   name,
@@ -52,11 +65,12 @@ export default function Avatar({
   const initials = useMemo(() => initialOf(name || username), [name, username]);
   const color = useMemo(() => colorFor(username || name), [username, name]);
   const altText = alt || name || (username ? `@${username}` : "User avatar");
+  const resolvedSrc = resolveSrc(src);
 
-  if (src) {
+  if (resolvedSrc) {
     return (
       <img
-        src={src}
+        src={resolvedSrc}
         alt={altText}
         loading="lazy"
         decoding="async"

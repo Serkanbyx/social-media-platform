@@ -141,7 +141,7 @@ export default function NotificationsPage() {
         </Button>
       </header>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         {showInitialSkeleton ? (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -156,9 +156,13 @@ export default function NotificationsPage() {
           />
         ) : (
           <>
-            {grouped.map((group) => (
+            {grouped.map((group, groupIdx) => (
               <Fragment key={group.key}>
-                <h2 className="sticky top-14 z-10 bg-zinc-50/90 px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide text-zinc-500 backdrop-blur dark:bg-zinc-900/80 dark:text-zinc-400">
+                <h2
+                  className={`${
+                    groupIdx === 0 ? "rounded-t-xl" : ""
+                  } border-b border-zinc-100 bg-zinc-50 px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400`}
+                >
                   {group.label}
                 </h2>
                 <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
