@@ -24,28 +24,28 @@ import { cn } from "../../utils/cn.js";
  */
 
 const FONT_SIZE_OPTIONS = [
-  { value: "sm", label: "Küçük" },
-  { value: "md", label: "Orta" },
-  { value: "lg", label: "Büyük" },
+  { value: "sm", label: "Small" },
+  { value: "md", label: "Medium" },
+  { value: "lg", label: "Large" },
 ];
 
 const THEME_OPTIONS = [
   {
     value: "light",
-    title: "Açık",
-    description: "Aydınlık, temiz arayüz.",
+    title: "Light",
+    description: "Bright, clean interface.",
     icon: Sun,
   },
   {
     value: "dark",
-    title: "Koyu",
-    description: "Gözleri yormayan koyu mod.",
+    title: "Dark",
+    description: "Easy-on-the-eyes dark mode.",
     icon: Moon,
   },
   {
     value: "system",
-    title: "Sistem",
-    description: "İşletim sistemini takip eder.",
+    title: "System",
+    description: "Follows your operating system.",
     icon: Monitor,
   },
 ];
@@ -100,7 +100,7 @@ function ThemeThumbnail({ value, selected }) {
 }
 
 export default function AppearanceSettings() {
-  useDocumentTitle("Görünüm · Ayarlar");
+  useDocumentTitle("Appearance · Settings");
 
   const { preferences } = usePreferences();
   const { save, savedKey } = usePreferenceAutoSave();
@@ -134,13 +134,13 @@ export default function AppearanceSettings() {
   return (
     <div className="space-y-6">
       <SettingsSection
-        title="Tema"
-        description="Pulse'un renk şemasını seç. Sistem seçeneği işletim sisteminin tercihini takip eder."
+        title="Theme"
+        description="Choose Pulse's color scheme. The system option follows your OS preference."
         action={<SaveIndicator visible={savedKey === "theme"} />}
       >
         <div
           role="radiogroup"
-          aria-label="Tema seçimi"
+          aria-label="Theme selection"
           className="grid gap-3 sm:grid-cols-3"
         >
           {THEME_OPTIONS.map((option) => {
@@ -153,7 +153,7 @@ export default function AppearanceSettings() {
                 icon={option.icon}
                 title={option.title}
                 description={option.description}
-                ariaLabel={`Tema: ${option.title}`}
+                ariaLabel={`Theme: ${option.title}`}
               >
                 <ThemeThumbnail value={option.value} selected={selected} />
               </SelectableCard>
@@ -163,13 +163,13 @@ export default function AppearanceSettings() {
       </SettingsSection>
 
       <SettingsSection
-        title="Yazı boyutu"
-        description="Tüm arayüzdeki metin ölçeği. Değişiklik anında uygulanır."
+        title="Font size"
+        description="Text scale across the entire interface. Changes apply instantly."
         action={<SaveIndicator visible={savedKey === "fontSize"} />}
       >
         <div className="flex flex-col gap-4">
           <SegmentedControl
-            ariaLabel="Yazı boyutu"
+            ariaLabel="Font size"
             options={FONT_SIZE_OPTIONS}
             value={preferences.fontSize}
             onChange={onPickFontSize}
@@ -178,34 +178,34 @@ export default function AppearanceSettings() {
             aria-live="polite"
             className="rounded-md bg-zinc-50 px-3 py-2 text-sm text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200"
           >
-            Hızlı kahverengi tilki, tembel köpeğin üzerinden atlar.
+            The quick brown fox jumps over the lazy dog.
           </p>
         </div>
       </SettingsSection>
 
       <SettingsSection
-        title="Hareketi azalt"
-        description="Sistem tercihinden bağımsız olarak geçişleri ve animasyonları en aza indirir."
+        title="Reduce motion"
+        description="Minimizes transitions and animations regardless of system preference."
         action={<SaveIndicator visible={savedKey === "reduceMotion"} />}
       >
         <ToggleSwitch
           checked={preferences.reduceMotion}
           onChange={onToggleReduceMotion}
-          label="Hareketi azalt"
-          description="Açıldığında tüm animasyon ve geçişler 0,01 ms'ye indirgenir."
+          label="Reduce motion"
+          description="When on, all animations and transitions are reduced to 0.01 ms."
         />
       </SettingsSection>
 
       <SettingsSection
-        title="Kompakt mod"
-        description="Liste ve akış öğelerinde daha sıkı bir aralık kullanır."
+        title="Compact mode"
+        description="Uses tighter spacing for list and feed items."
         action={<SaveIndicator visible={savedKey === "compactMode"} />}
       >
         <ToggleSwitch
           checked={preferences.compactMode}
           onChange={onToggleCompactMode}
-          label="Kompakt görünüm"
-          description="Yoğun bilgi tüketenler için ideal; aralıklar ve dolgular daraltılır."
+          label="Compact view"
+          description="Ideal for power users; spacing and padding are reduced."
         />
       </SettingsSection>
     </div>

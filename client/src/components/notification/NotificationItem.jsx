@@ -38,7 +38,7 @@ export default function NotificationItem({ notification }) {
   const [isLeaving, setIsLeaving] = useState(false);
 
   const sender = notification.sender || {};
-  const senderName = sender.name || sender.username || "Birisi";
+  const senderName = sender.name || sender.username || "Someone";
   const target = linkForNotification(notification);
   const showThumbnail =
     (notification.type === "like" || notification.type === "comment") &&
@@ -48,7 +48,7 @@ export default function NotificationItem({ notification }) {
     if (isLeaving) return;
     if (!notification.isRead) {
       markRead(notification._id).catch(() => {
-        notify.error("Bildirim güncellenemedi.");
+        notify.error("Couldn't update notification.");
       });
     }
     navigate(target);
@@ -65,7 +65,7 @@ export default function NotificationItem({ notification }) {
       await removeNotification(notification._id);
     } catch {
       setIsLeaving(false);
-      notify.error("Bildirim silinemedi.");
+      notify.error("Couldn't delete notification.");
     }
   };
 
@@ -151,7 +151,7 @@ export default function NotificationItem({ notification }) {
           icon={X}
           size="sm"
           variant="ghost"
-          aria-label="Bildirimi sil"
+          aria-label="Delete notification"
           onClick={onDelete}
           onKeyDown={(event) => {
             event.stopPropagation();

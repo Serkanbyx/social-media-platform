@@ -70,7 +70,7 @@ export default function usePreferenceAutoSave({
         } catch (error) {
           const message =
             error?.response?.data?.message ||
-            "Tercih kaydedilemedi. Lütfen tekrar dene.";
+            "Couldn't save preference. Please try again.";
           notify.error(message);
         }
       }, debounceMs);

@@ -33,8 +33,8 @@ import useDocumentTitle from "../../hooks/useDocumentTitle.js";
  * than `ConfirmModal` because the body needs interactive inputs.
  */
 
-const FALLBACK_PW_ERROR = "Şifre güncellenemedi. Lütfen tekrar dene.";
-const FALLBACK_DELETE_ERROR = "Hesap silinemedi. Lütfen tekrar dene.";
+const FALLBACK_PW_ERROR = "Couldn't update password. Please try again.";
+const FALLBACK_DELETE_ERROR = "Couldn't delete account. Please try again.";
 
 const initialPasswordForm = {
   currentPassword: "",
@@ -43,7 +43,7 @@ const initialPasswordForm = {
 };
 
 export default function AccountSettings() {
-  useDocumentTitle("Hesap · Ayarlar");
+  useDocumentTitle("Account · Settings");
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -100,7 +100,7 @@ export default function AccountSettings() {
         newPassword: pwForm.newPassword,
       });
       setPwForm(initialPasswordForm);
-      notify.success("Şifren güncellendi.");
+      notify.success("Your password has been updated.");
     } catch (error) {
       const status = error?.response?.status;
       const message =
@@ -108,7 +108,7 @@ export default function AccountSettings() {
       if (status === 401) {
         setPwFieldError((prev) => ({
           ...prev,
-          currentPassword: "Mevcut şifre yanlış.",
+          currentPassword: "Current password is incorrect.",
         }));
       } else if (status === 400) {
         setPwFieldError((prev) => ({
@@ -134,14 +134,14 @@ export default function AccountSettings() {
     setDeleteOpen(false);
     logout();
     navigate("/login", { replace: true });
-    notify.success("Hesabın silindi. Pulse'a olan katkıların için teşekkürler.");
+    notify.success("Your account has been deleted. Thanks for being part of Pulse.");
   }, [logout, navigate]);
 
   return (
     <div className="space-y-6">
       <SettingsSection
-        title="E-posta"
-        description="Hesabın bu adres üzerinden tanımlanır. E-posta değişikliği henüz desteklenmiyor."
+        title="Email"
+        description="Your account is identified by this address. Changing your email isn't supported yet."
       >
         <Input
           type="email"
@@ -150,19 +150,19 @@ export default function AccountSettings() {
           aria-readonly="true"
           leftAddon={<Mail className="size-4" aria-hidden="true" />}
           rightAddon={
-            <Tooltip content="E-posta değişikliği yakında">
+            <Tooltip content="Email changes coming soon">
               <span className="inline-flex size-7 items-center justify-center rounded-md text-zinc-400">
                 <Lock className="size-3.5" aria-hidden="true" />
               </span>
             </Tooltip>
           }
-          helper="E-posta adresini değiştirmek için yakında bir akış ekleyeceğiz."
+          helper="We'll add a flow for changing your email address soon."
         />
       </SettingsSection>
 
       <SettingsSection
-        title="Şifreyi değiştir"
-        description="Şifren en az 8 karakter olmalı ve harf + rakam içermelidir."
+        title="Change password"
+        description="Your password must be at least 8 characters and include letters and digits."
       >
         {pwError && (
           <Banner variant="danger" className="mb-4">
@@ -179,7 +179,7 @@ export default function AccountSettings() {
           <PasswordInput
             id="acc-current-password"
             name="currentPassword"
-            label="Mevcut şifre"
+            label="Current password"
             autoComplete="current-password"
             required
             value={pwForm.currentPassword}
@@ -193,13 +193,13 @@ export default function AccountSettings() {
             <PasswordInput
               id="acc-new-password"
               name="newPassword"
-              label="Yeni şifre"
+              label="New password"
               autoComplete="new-password"
               required
               value={pwForm.newPassword}
               onChange={(event) => setPwField("newPassword", event.target.value)}
               errorText={pwFieldError.newPassword || undefined}
-              helperText="En az 8 karakter, harf ve rakam içermeli."
+              helperText="At least 8 characters, with letters and digits."
             />
             <PasswordStrengthMeter score={passwordScore} />
           </div>
@@ -207,7 +207,7 @@ export default function AccountSettings() {
           <PasswordInput
             id="acc-confirm-password"
             name="confirmPassword"
-            label="Yeni şifre (tekrar)"
+            label="Confirm new password"
             autoComplete="new-password"
             required
             value={pwForm.confirmPassword}
@@ -217,7 +217,7 @@ export default function AccountSettings() {
             errorText={
               pwForm.confirmPassword &&
               pwForm.newPassword !== pwForm.confirmPassword
-                ? "Şifreler eşleşmiyor."
+                ? "Passwords don't match."
                 : pwFieldError.confirmPassword || undefined
             }
           />
@@ -238,7 +238,7 @@ export default function AccountSettings() {
               }}
               disabled={!pwDirty || pwSaving}
             >
-              Temizle
+              Clear
             </Button>
             <Button
               type="submit"
@@ -247,24 +247,24 @@ export default function AccountSettings() {
               loading={pwSaving}
               disabled={!pwValid || pwSaving}
             >
-              {pwSaving ? "Kaydediliyor…" : "Şifreyi güncelle"}
+              {pwSaving ? "Saving…" : "Update password"}
             </Button>
           </div>
         </form>
       </SettingsSection>
 
       <SettingsSection
-        title="Tüm cihazlardan çıkış"
-        description="Diğer tüm cihazlardaki oturumları kapatır."
+        title="Sign out everywhere"
+        description="Ends your sessions on all other devices."
       >
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Tüm cihazlardan tek seferde çıkış yapma desteği yakında geliyor.
+            Signing out from all devices in one click is coming soon.
           </p>
-          <Tooltip content="Yakında">
+          <Tooltip content="Coming soon">
             <span>
               <Button variant="secondary" size="md" disabled>
-                Tüm cihazlardan çık
+                Sign out everywhere
               </Button>
             </span>
           </Tooltip>
@@ -272,16 +272,16 @@ export default function AccountSettings() {
       </SettingsSection>
 
       <SettingsSection
-        title="Hesabı sil"
-        description="Profilini, gönderilerini, yorumlarını ve takiplerini kalıcı olarak siler. Bu işlem geri alınamaz."
+        title="Delete account"
+        description="Permanently deletes your profile, posts, comments, and follows. This action cannot be undone."
         className="border-rose-200/80 dark:border-rose-900/60"
       >
         <div className="space-y-4">
           <Banner variant="danger">
-            <div className="font-medium">Bu işlem geri alınamaz</div>
+            <div className="font-medium">This action cannot be undone</div>
             <p className="mt-1 text-xs">
-              Hesabını silmek; tüm gönderilerini, yorumlarını, beğenilerini,
-              takiplerini ve bildirimlerini kalıcı olarak kaldırır.
+              Deleting your account permanently removes all of your posts,
+              comments, likes, follows, and notifications.
             </p>
           </Banner>
 
@@ -292,7 +292,7 @@ export default function AccountSettings() {
               leftIcon={Trash2}
               onClick={onRequestDelete}
             >
-              Hesabı sil…
+              Delete account…
             </Button>
           </div>
         </div>
@@ -344,7 +344,7 @@ function DeleteAccountModalContent({ onClose, username, onDeleted, cancelRef }) 
       const message =
         err?.response?.data?.message || FALLBACK_DELETE_ERROR;
       if (status === 401) {
-        setError("Şifre yanlış.");
+        setError("Incorrect password.");
       } else if (status === 403) {
         setError(message);
       } else {
@@ -359,8 +359,8 @@ function DeleteAccountModalContent({ onClose, username, onDeleted, cancelRef }) 
     <Modal
       open
       onClose={busy ? undefined : onClose}
-      title="Hesabı kalıcı olarak sil"
-      description="Bu işlem geri alınamaz. Devam etmek için kullanıcı adını ve şifreni gir."
+      title="Permanently delete account"
+      description="This action cannot be undone. To continue, enter your username and password."
       size="md"
       initialFocusRef={cancelRef}
       closeOnBackdrop={!busy}
@@ -372,7 +372,7 @@ function DeleteAccountModalContent({ onClose, username, onDeleted, cancelRef }) 
             onClick={onClose}
             disabled={busy}
           >
-            Vazgeç
+            Cancel
           </Button>
           <Button
             variant="danger"
@@ -381,32 +381,32 @@ function DeleteAccountModalContent({ onClose, username, onDeleted, cancelRef }) 
             leftIcon={Trash2}
             onClick={handleDelete}
           >
-            {busy ? "Siliniyor…" : "Hesabı sil"}
+            {busy ? "Deleting…" : "Delete account"}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <Banner variant="danger">
-          <div className="font-medium">Tüm verilerin silinecek</div>
+          <div className="font-medium">All of your data will be deleted</div>
           <p className="mt-0.5 text-xs">
-            Profilin, gönderilerin, yorumların, beğenilerin ve takiplerin
-            kalıcı olarak kaldırılır.
+            Your profile, posts, comments, likes and follows will be permanently
+            removed.
           </p>
         </Banner>
 
         <Input
-          label="Kullanıcı adını yaz"
+          label="Type your username"
           required
           value={confirmName}
           onChange={(event) => setConfirmName(event.target.value)}
           placeholder={username}
           autoComplete="off"
           spellCheck={false}
-          helper={`Onaylamak için "${username}" yaz.`}
+          helper={`Type "${username}" to confirm.`}
           error={
             confirmName && !usernameMatches
-              ? "Kullanıcı adı eşleşmiyor."
+              ? "Username doesn't match."
               : undefined
           }
         />
@@ -414,7 +414,7 @@ function DeleteAccountModalContent({ onClose, username, onDeleted, cancelRef }) 
         <PasswordInput
           id="delete-account-password"
           name="deleteAccountPassword"
-          label="Mevcut şifren"
+          label="Current password"
           autoComplete="current-password"
           required
           value={password}

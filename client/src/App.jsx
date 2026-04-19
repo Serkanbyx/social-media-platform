@@ -113,7 +113,7 @@ export default function App() {
 
   return (
     <ErrorBoundary key={pathname}>
-      <Suspense fallback={<Spinner fullScreen label="Sayfa yükleniyor" />}>
+      <Suspense fallback={<Spinner fullScreen label="Loading page" />}>
         <AppRoutes />
       </Suspense>
     </ErrorBoundary>

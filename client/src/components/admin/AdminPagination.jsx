@@ -24,12 +24,12 @@ export default function AdminPagination({
 
   return (
     <nav
-      aria-label="Sayfalama"
+      aria-label="Pagination"
       className="flex flex-col items-center justify-between gap-3 border-t border-zinc-200 px-1 pt-4 sm:flex-row dark:border-zinc-800"
     >
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Toplam <span className="font-semibold tnum text-zinc-700 dark:text-zinc-200">{total}</span> kayıt ·{" "}
-        Sayfa <span className="font-semibold tnum text-zinc-700 dark:text-zinc-200">{page}</span> / {totalPages}
+        <span className="font-semibold tnum text-zinc-700 dark:text-zinc-200">{total}</span> total ·{" "}
+        Page <span className="font-semibold tnum text-zinc-700 dark:text-zinc-200">{page}</span> of {totalPages}
       </p>
       <div className="flex items-center gap-2">
         <Button
@@ -39,7 +39,7 @@ export default function AdminPagination({
           disabled={!canPrev}
           onClick={() => onPageChange?.(page - 1)}
         >
-          Önceki
+          Previous
         </Button>
         <Button
           variant="secondary"
@@ -48,7 +48,7 @@ export default function AdminPagination({
           disabled={!canNext}
           onClick={() => onPageChange?.(page + 1)}
         >
-          Sonraki
+          Next
         </Button>
       </div>
     </nav>

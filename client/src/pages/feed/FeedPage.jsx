@@ -58,7 +58,7 @@ const isValidPost = (value) =>
   Boolean(value) && typeof value === "object" && typeof value._id === "string";
 
 const buildTitle = (newCount) =>
-  newCount > 0 ? `(${newCount}) Akış` : "Akış";
+  newCount > 0 ? `(${newCount}) Feed` : "Feed";
 
 export default function FeedPage() {
   const { socket } = useSocket();
@@ -92,7 +92,7 @@ export default function FeedPage() {
       setHasMore(Boolean(data?.hasMore));
       setNewCount(0);
     } catch {
-      setError("Akış yüklenemedi.");
+      setError("Couldn't load feed.");
     } finally {
       setInitialLoading(false);
     }
@@ -227,8 +227,8 @@ export default function FeedPage() {
           >
             <ArrowUp className="size-4" aria-hidden="true" />
             {newCount === 1
-              ? "1 yeni gönderi"
-              : `${newCount} yeni gönderi`}
+              ? "1 new post"
+              : `${newCount} new posts`}
           </button>
         </div>
       )}
@@ -242,7 +242,7 @@ export default function FeedPage() {
               size="sm"
               onClick={fetchInitial}
             >
-              Tekrar dene
+              Try again
             </Button>
           </div>
         </Banner>
@@ -257,9 +257,9 @@ export default function FeedPage() {
       {showEmpty && (
         <EmptyState
           icon={Sparkles}
-          title="Akışın oldukça sessiz"
-          description="Burada gönderi görmek için Keşfet'ten birilerini takip etmeye başla."
-          action={{ label: "Keşfet'e git", href: "/explore" }}
+          title="Your feed is pretty quiet"
+          description="Head to Explore and follow some people to start seeing posts here."
+          action={{ label: "Go to Explore", href: "/explore" }}
         />
       )}
 
@@ -287,7 +287,7 @@ export default function FeedPage() {
           {paginating && (
             <div className="flex items-center justify-center gap-2 py-4 text-sm text-zinc-500 dark:text-zinc-400">
               <Spinner size="md" />
-              <span>Daha fazla yükleniyor…</span>
+              <span>Loading more…</span>
             </div>
           )}
         </div>
@@ -297,17 +297,17 @@ export default function FeedPage() {
         <div className="flex flex-col items-center gap-1 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
           <CheckCircle2 className="size-5 text-emerald-500" aria-hidden="true" />
           <p className="font-medium text-zinc-700 dark:text-zinc-200">
-            Tümünü gördün
+            You're all caught up
           </p>
           <p>
-            Daha fazlası için{" "}
+            For more, check out the{" "}
             <Link
               to="/explore"
               className="font-medium text-brand-600 hover:underline dark:text-brand-400"
             >
-              Keşfet
+              Explore
             </Link>{" "}
-            sayfasına göz at.
+            page.
           </p>
         </div>
       )}

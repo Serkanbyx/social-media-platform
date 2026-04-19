@@ -30,7 +30,7 @@ import { cn } from "../../utils/cn.js";
  * Single round-trip via `getDashboardStats`: the backend already
  * `Promise.all`s every count + leaderboard query, so we keep the page
  * "render once" and skip incremental loaders. A failure renders a
- * Banner with a "Tekrar dene" action so the moderator never sits in
+ * Banner with a "Try again" action so the moderator never sits in
  * front of an empty page wondering whether the server is down.
  *
  * The greeting uses the signed-in admin's first name when available;
@@ -72,7 +72,7 @@ const firstName = (value) => {
 };
 
 export default function AdminDashboard() {
-  useDocumentTitle("Yönetim · Panel");
+  useDocumentTitle("Admin · Dashboard");
 
   const { user } = useAuth();
 
@@ -80,78 +80,87 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchStats = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const loadStats = useCallback(async (signal) => {
     try {
       const data = await adminService.getDashboardStats();
+      if (signal?.aborted) return;
       setStats(data?.stats || STATS_FALLBACK);
+      setError("");
     } catch {
-      setError("Panel verileri yüklenemedi.");
+      if (signal?.aborted) return;
+      setError("Couldn't load dashboard data.");
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  const retryStats = useCallback(() => {
+    setLoading(true);
+    setError("");
+    loadStats();
+  }, [loadStats]);
 
-  const greetingName = firstName(user?.name) || user?.username || "moderatör";
+  useEffect(() => {
+    const controller = new AbortController();
+    loadStats(controller.signal);
+    return () => controller.abort();
+  }, [loadStats]);
+
+  const greetingName = firstName(user?.name) || user?.username || "moderator";
 
   const cards = [
     {
       key: "users-total",
-      label: "Toplam kullanıcı",
+      label: "Total users",
       value: stats.users.total,
       icon: Users,
       tone: "brand",
     },
     {
       key: "users-active",
-      label: "Aktif kullanıcı",
+      label: "Active users",
       value: stats.users.active,
       icon: UserCheck,
       tone: "emerald",
     },
     {
       key: "posts-total",
-      label: "Toplam gönderi",
+      label: "Total posts",
       value: stats.posts.total,
       icon: Newspaper,
       tone: "sky",
     },
     {
       key: "posts-hidden",
-      label: "Gizlenmiş gönderi",
+      label: "Hidden posts",
       value: stats.posts.hidden,
       icon: EyeOff,
       tone: stats.posts.hidden > 0 ? "rose" : "zinc",
     },
     {
       key: "comments-total",
-      label: "Toplam yorum",
+      label: "Total comments",
       value: stats.comments.total,
       icon: MessageSquare,
       tone: "violet",
     },
     {
       key: "likes-total",
-      label: "Toplam beğeni",
+      label: "Total likes",
       value: stats.likes.total,
       icon: Heart,
       tone: "rose",
     },
     {
       key: "posts-7d",
-      label: "Son 7 günde gönderi",
+      label: "Posts in last 7 days",
       value: stats.posts.newLast7Days,
       icon: Sparkles,
       tone: "amber",
     },
     {
       key: "users-7d",
-      label: "Son 7 günde kullanıcı",
+      label: "Users in last 7 days",
       value: stats.users.newLast7Days,
       icon: UserPlus,
       tone: "emerald",
@@ -162,24 +171,24 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <header>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Tekrar hoş geldin, <span className="font-medium text-zinc-700 dark:text-zinc-200">{greetingName}</span>.
+          Welcome back, <span className="font-medium text-zinc-700 dark:text-zinc-200">{greetingName}</span>.
         </p>
         <h2 className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Genel bakış
+          Overview
         </h2>
       </header>
 
       {error && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           <span>{error}</span>
-          <Button variant="secondary" size="sm" onClick={fetchStats}>
-            Tekrar dene
+          <Button variant="secondary" size="sm" onClick={retryStats}>
+            Try again
           </Button>
         </div>
       )}
 
       <section
-        aria-label="Özet istatistikler"
+        aria-label="Summary statistics"
         className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
       >
         {loading
@@ -243,13 +252,13 @@ function TopUsersPanel({ users, loading }) {
       <header className="mb-3 flex items-center justify-between gap-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
           <Trophy className="size-4 text-amber-500" aria-hidden="true" />
-          Takipçisi en çok olan kullanıcılar
+          Users with the most followers
         </h3>
         <Link
           to="/admin/users"
           className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
         >
-          Hepsini gör
+          See all
         </Link>
       </header>
 
@@ -268,7 +277,7 @@ function TopUsersPanel({ users, loading }) {
         </ul>
       ) : users.length === 0 ? (
         <p className="py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Henüz gösterilecek kullanıcı yok.
+          No users to show yet.
         </p>
       ) : (
         <ol className="space-y-2">
@@ -301,7 +310,7 @@ function TopUsersPanel({ users, loading }) {
                 </span>
               </Link>
               <span className="shrink-0 text-xs font-semibold text-zinc-700 tnum dark:text-zinc-200">
-                {compactCount(person.followersCount ?? 0)} takipçi
+                {compactCount(person.followersCount ?? 0)} followers
               </span>
             </li>
           ))}
@@ -316,15 +325,15 @@ function RecentActivityPanel() {
     <Card padding="md">
       <header className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-          Son etkinlikler
+          Recent activity
         </h3>
         <span className="text-2xs font-semibold uppercase tracking-wide text-zinc-400">
-          Yakında
+          Coming soon
         </span>
       </header>
       <p className="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-        Moderasyon hareketleri (gizleme, silme, rol değişikliği) burada
-        zaman çizelgesi olarak listelenecek.
+        Moderation actions (hide, delete, role change) will appear here as a
+        timeline.
       </p>
     </Card>
   );

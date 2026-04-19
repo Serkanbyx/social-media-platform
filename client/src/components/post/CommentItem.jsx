@@ -70,11 +70,11 @@ function CommentItem({ comment, postAuthorId, onDelete, className = "" }) {
       setConfirmOpen(false);
       setRemoving(true);
       window.setTimeout(() => onDelete?.(commentId), 200);
-      notify.success("Yorum silindi.");
+      notify.success("Comment deleted.");
     } catch {
       setRemoving(false);
       setConfirmOpen(false);
-      notify.error("Yorum silinemedi.");
+      notify.error("Couldn't delete comment.");
     }
   }, [commentId, onDelete]);
 
@@ -82,7 +82,7 @@ function CommentItem({ comment, postAuthorId, onDelete, className = "" }) {
     () => [
       {
         key: "delete",
-        label: "Yorumu sil",
+        label: "Delete comment",
         icon: Trash2,
         danger: true,
         onClick: () => setConfirmOpen(true),
@@ -107,7 +107,7 @@ function CommentItem({ comment, postAuthorId, onDelete, className = "" }) {
         <Link
           to={profileHref}
           className="shrink-0 rounded-full"
-          aria-label={`@${username} profili`}
+          aria-label={`@${username} profile`}
         >
           <Avatar
             src={author.avatar?.url}
@@ -162,7 +162,7 @@ function CommentItem({ comment, postAuthorId, onDelete, className = "" }) {
               trigger={
                 <IconButton
                   icon={MoreHorizontal}
-                  aria-label="Yorum menüsü"
+                  aria-label="Comment menu"
                   variant="ghost"
                   size="sm"
                 />
@@ -177,11 +177,11 @@ function CommentItem({ comment, postAuthorId, onDelete, className = "" }) {
 
       <ConfirmModal
         open={confirmOpen}
-        title="Yorumu sil"
-        description="Bu yorumu silmek üzeresin. Bu işlem geri alınamaz."
-        confirmLabel="Sil"
-        cancelLabel="Vazgeç"
-        busyLabel="Siliniyor…"
+        title="Delete comment"
+        description="You're about to delete this comment. This action can't be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        busyLabel="Deleting…"
         danger
         onConfirm={handleDeleteConfirm}
         onCancel={() => setConfirmOpen(false)}

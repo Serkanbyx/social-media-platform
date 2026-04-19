@@ -67,11 +67,11 @@ export default class ErrorBoundary extends Component {
           </span>
 
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            Bir şeyler ters gitti
+            Something went wrong
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Sayfa beklenmedik bir hatayla karşılaştı. Yeniden denemeyi
-            deneyebilir veya sayfayı yenileyebilirsin.
+            The page hit an unexpected error. You can try again or reload
+            the page.
           </p>
 
           {isDev && (
@@ -87,10 +87,10 @@ export default class ErrorBoundary extends Component {
               onClick={this.handleReset}
               leftIcon={RefreshCw}
             >
-              Tekrar dene
+              Try again
             </Button>
             <Button variant="primary" size="md" onClick={this.handleReload}>
-              Sayfayı yenile
+              Reload page
             </Button>
           </div>
         </div>

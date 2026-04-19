@@ -26,53 +26,32 @@ import * as postService from "../../services/postService.js";
  * straight into the product". A compact hero with the primary CTAs sits
  * above a live grid of trending posts so the first viewport already
  * communicates *what* Pulse is — not just *that* it exists.
- *
- * Composition (top → bottom):
- *  1. Hero band — gradient backdrop, tagline, sign up / log in CTAs,
- *     plus a row of feature pills that summarize the product surface.
- *  2. Trending grid — `PostGrid` fed by `postService.explorePosts`. The
- *     grid is rendered inside a wider container (negative margins on
- *     `MainLayout`'s 2xl rail) so the 3-column layout actually breathes
- *     on desktop without affecting feed/profile pages.
- *  3. Feature highlights — three short value props with icons, kept
- *     subtle to not steal attention from the live content above.
- *  4. Closing CTA card — last-call sign up nudge before the footer.
- *
- * Data:
- *  - Read-only call to the public `/posts/explore` endpoint with the
- *    same defaults `ExplorePage` uses, but capped at 9 items so the
- *    landing renders fast and stays a "preview", not a full feed.
- *  - Failures degrade to a friendly empty state — visitors should still
- *    see CTAs even when the API is down.
- *
- * Routing: rendered by `App.jsx`'s `HomeRoute` only when there is no
- * authenticated user; signed-in visitors keep getting the feed at `/`.
  */
 
 const TRENDING_LIMIT = 9;
 
 const FEATURE_PILLS = [
-  { icon: Zap, label: "Anlık akış" },
-  { icon: Bell, label: "Gerçek zamanlı bildirimler" },
-  { icon: ImagePlus, label: "Görsel paylaşımı" },
-  { icon: Compass, label: "Trend keşfi" },
+  { icon: Zap, label: "Real-time feed" },
+  { icon: Bell, label: "Live notifications" },
+  { icon: ImagePlus, label: "Image sharing" },
+  { icon: Compass, label: "Trending discovery" },
 ];
 
 const HIGHLIGHTS = [
   {
     icon: Sparkles,
-    title: "Saniyeler içinde paylaş",
-    body: "Metin ya da görsel — tek bir kompozer, hızlı klavye akışı ve karakter sayacıyla istediğini söyle.",
+    title: "Share in seconds",
+    body: "Text or image — one composer, fast keyboard flow, and a character counter keep your message tight.",
   },
   {
     icon: Users,
-    title: "Topluluğunu kur",
-    body: "İlham aldığın insanları takip et, profilinde paylaşımlarının ızgarasını sergile.",
+    title: "Build your community",
+    body: "Follow people who inspire you and showcase your own posts in a clean grid on your profile.",
   },
   {
     icon: Bell,
-    title: "Gelişmeleri kaçırma",
-    body: "Beğeni, yorum ve takip bildirimleri canlı bağlantı üzerinden anında düşer.",
+    title: "Never miss a beat",
+    body: "Like, comment and follow notifications arrive instantly over a live connection.",
   },
 ];
 
@@ -81,7 +60,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useDocumentTitle("Pulse — Toplulukla nabzını tut");
+  useDocumentTitle("Pulse — Stay in tune with the community");
 
   const fetchTrending = useCallback(async () => {
     setLoading(true);
@@ -117,7 +96,6 @@ export default function LandingPage() {
         aria-labelledby="landing-hero-title"
         className="relative -mx-4 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-50 via-white to-brand-100 px-6 py-10 ring-1 ring-brand-100 sm:-mx-6 sm:px-10 sm:py-14 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 dark:ring-zinc-800"
       >
-        {/* Decorative gradient blobs — purely visual, hidden from a11y */}
         <span
           aria-hidden="true"
           className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-brand-200/60 blur-3xl dark:bg-brand-500/10"
@@ -133,24 +111,24 @@ export default function LandingPage() {
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
             </span>
-            Topluluk şu an aktif
+            The community is active right now
           </span>
 
           <h1
             id="landing-hero-title"
             className="text-balance text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-50"
           >
-            Toplulukla{" "}
+            Stay in tune with the{" "}
             <span className="bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent dark:from-brand-300 dark:to-brand-500">
-              nabzını
-            </span>{" "}
-            tut.
+              community
+            </span>
+            .
           </h1>
 
           <p className="text-pretty text-base text-zinc-600 sm:text-lg dark:text-zinc-300">
-            Düşüncelerini paylaş, ilham aldığın insanları takip et, anlık
-            bildirimlerle gelişmelerden kopma. Pulse, sade ve hızlı bir
-            sosyal akış deneyimi sunar.
+            Share your thoughts, follow the people who inspire you, and stay in
+            the loop with real-time notifications. Pulse is a clean, fast social
+            experience.
           </p>
 
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -162,7 +140,7 @@ export default function LandingPage() {
               rightIcon={ArrowRight}
               className="w-full sm:w-auto"
             >
-              Ücretsiz hesap aç
+              Create a free account
             </Button>
             <Button
               as={Link}
@@ -171,17 +149,17 @@ export default function LandingPage() {
               variant="secondary"
               className="w-full sm:w-auto"
             >
-              Giriş yap
+              Sign in
             </Button>
           </div>
 
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            ya da{" "}
+            or{" "}
             <Link
               to="/explore"
               className="font-medium text-brand-700 hover:underline dark:text-brand-300"
             >
-              önce keşfetmeye başla
+              start exploring first
             </Link>
           </p>
 
@@ -199,7 +177,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ----- Trending preview (escapes the 2xl rail for a roomier grid) ----- */}
+      {/* ----- Trending preview ----- */}
       <section
         aria-labelledby="landing-trending-title"
         className="-mx-4 sm:-mx-6"
@@ -212,10 +190,10 @@ export default function LandingPage() {
                 className="flex items-center gap-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50"
               >
                 <Flame className="size-5 text-amber-500" aria-hidden="true" />
-                Topluluktan öne çıkanlar
+                Highlights from the community
               </h2>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Şu anda Pulse'ta nabız tutan paylaşımlardan bir kesit.
+                A peek at the posts trending on Pulse right now.
               </p>
             </div>
 
@@ -223,7 +201,7 @@ export default function LandingPage() {
               to="/explore"
               className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
             >
-              Tümünü Keşfet'te gör
+              See all on Explore
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </header>
@@ -235,18 +213,18 @@ export default function LandingPage() {
               icon={Flame}
               title={
                 error
-                  ? "Trendler şu an yüklenemedi"
-                  : "Henüz trend bir şey yok"
+                  ? "Couldn't load trending right now"
+                  : "Nothing trending yet"
               }
               description={
                 error
-                  ? "Bağlantını kontrol edip tekrar deneyebilirsin."
-                  : "İlk paylaşımı yaparak burayı sen başlatabilirsin."
+                  ? "Check your connection and try again."
+                  : "Be the first to share a post and kick things off."
               }
               action={
                 error
-                  ? { label: "Tekrar dene", onClick: fetchTrending }
-                  : { label: "Hesap aç", href: "/register" }
+                  ? { label: "Try again", onClick: fetchTrending }
+                  : { label: "Create an account", href: "/register" }
               }
             />
           )}
@@ -265,10 +243,10 @@ export default function LandingPage() {
             id="landing-highlights-title"
             className="text-xl font-semibold text-zinc-900 dark:text-zinc-50"
           >
-            Neden Pulse?
+            Why Pulse?
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Üç şeyi iyi yapar: paylaşmak, takip etmek, haberdar kalmak.
+            It does three things well: sharing, following, and staying informed.
           </p>
         </header>
 
@@ -300,10 +278,10 @@ export default function LandingPage() {
               id="landing-cta-title"
               className="text-lg font-semibold sm:text-xl"
             >
-              Hazırsan başla.
+              Ready when you are.
             </h2>
             <p className="text-sm text-white/85">
-              Hesabın 30 saniyede hazır — hemen ilk gönderini paylaş.
+              Your account is ready in 30 seconds — share your first post right away.
             </p>
           </div>
           <div className="mt-4 flex flex-col gap-2 sm:mt-0 sm:flex-row">
@@ -315,7 +293,7 @@ export default function LandingPage() {
               rightIcon={ArrowRight}
               className="w-full bg-white text-brand-700 hover:bg-zinc-100 sm:w-auto"
             >
-              Hesap aç
+              Create account
             </Button>
             <Button
               as={Link}
@@ -324,7 +302,7 @@ export default function LandingPage() {
               variant="ghost"
               className="w-full text-white hover:bg-white/15 sm:w-auto"
             >
-              Giriş yap
+              Sign in
             </Button>
           </div>
         </div>

@@ -182,7 +182,7 @@ function PostCard({
     } catch {
       setLiked(!nextLiked);
       setLikesCount((prev) => Math.max(0, prev - delta));
-      notify.error("Beğeni güncellenemedi.");
+      notify.error("Couldn't update like.");
     } finally {
       setLikeBusy(false);
     }
@@ -192,13 +192,13 @@ function PostCard({
     const url = `${window.location.origin}/posts/${post._id}`;
     try {
       if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
-        await navigator.share({ url, title: "Pulse gönderisi" });
+        await navigator.share({ url, title: "Pulse post" });
         return;
       }
       await navigator.clipboard.writeText(url);
-      notify.success("Bağlantı kopyalandı.");
+      notify.success("Link copied.");
     } catch {
-      notify.error("Bağlantı kopyalanamadı.");
+      notify.error("Couldn't copy link.");
     }
   }, [post._id]);
 
@@ -208,22 +208,22 @@ function PostCard({
       setConfirmOpen(false);
       setRemoving(true);
       window.setTimeout(() => onDelete?.(post._id), 200);
-      notify.success("Gönderi silindi.");
+      notify.success("Post deleted.");
     } catch {
-      notify.error("Gönderi silinemedi.");
+      notify.error("Couldn't delete post.");
       setConfirmOpen(false);
     }
   }, [onDelete, post._id]);
 
   const menuItems = useMemo(() => {
     const items = [
-      { key: "copy", label: "Bağlantıyı kopyala", icon: Link2, onClick: handleCopyLink },
+      { key: "copy", label: "Copy link", icon: Link2, onClick: handleCopyLink },
     ];
     if (canMutate) {
       items.push({ divider: true });
       items.push({
         key: "delete",
-        label: isAuthor ? "Gönderiyi sil" : "Gönderiyi sil (admin)",
+        label: isAuthor ? "Delete post" : "Delete post (admin)",
         icon: Trash2,
         danger: true,
         onClick: () => setConfirmOpen(true),
@@ -254,7 +254,7 @@ function PostCard({
 
   const altText = post.content
     ? truncate(post.content, 80)
-    : `@${username} kullanıcısının gönderisi`;
+    : `Post by @${username}`;
 
   const createdIso = toIso(post.createdAt);
   const createdRelative = formatRelative(post.createdAt);
@@ -263,9 +263,9 @@ function PostCard({
   const showImage = !isCompact && Boolean(post.image?.url);
   const clampBody = !isDetail && !expanded;
 
-  const likeLabel = liked ? "Beğeniyi geri al" : "Beğen";
-  const commentLabel = "Yorum yap";
-  const shareLabel = "Paylaş";
+  const likeLabel = liked ? "Unlike" : "Like";
+  const commentLabel = "Comment";
+  const shareLabel = "Share";
 
   return (
     <>
@@ -283,7 +283,7 @@ function PostCard({
           <Link
             to={profileHref}
             className="shrink-0 rounded-full"
-            aria-label={`@${username} profili`}
+            aria-label={`@${username} profile`}
           >
             <Avatar
               src={author.avatar?.url}
@@ -328,7 +328,7 @@ function PostCard({
               trigger={
                 <IconButton
                   icon={MoreHorizontal}
-                  aria-label="Gönderi menüsü"
+                  aria-label="Post menu"
                   variant="ghost"
                   size="sm"
                 />
@@ -357,7 +357,7 @@ function PostCard({
             onClick={() => setExpanded(true)}
             className="mt-1 text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
           >
-            Daha fazla göster
+            Show more
           </button>
         )}
 
@@ -370,7 +370,7 @@ function PostCard({
                   imageLandscape ? "aspect-video" : "aspect-[4/5]"
                 )}
                 role="img"
-                aria-label="Görsel yüklenemedi"
+                aria-label="Image failed to load"
               >
                 <ImageOff className="size-8" aria-hidden="true" />
               </div>
@@ -435,7 +435,7 @@ function PostCard({
               />
               <span className="tnum">
                 {isDetail
-                  ? `${compactCount(likesCount)} beğeni`
+                  ? `${compactCount(likesCount)} likes`
                   : compactCount(likesCount)}
               </span>
             </button>
@@ -450,7 +450,7 @@ function PostCard({
               <MessageCircle className="size-5" aria-hidden="true" />
               <span className="tnum">
                 {isDetail
-                  ? `${compactCount(post.commentsCount ?? 0)} yorum`
+                  ? `${compactCount(post.commentsCount ?? 0)} comments`
                   : compactCount(post.commentsCount ?? 0)}
               </span>
             </Link>
@@ -464,7 +464,7 @@ function PostCard({
               className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm transition-colors duration-fast hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
               <Share2 className="size-5" aria-hidden="true" />
-              {isDetail && <span>Paylaş</span>}
+              {isDetail && <span>Share</span>}
             </button>
           </Tooltip>
         </div>
@@ -472,11 +472,11 @@ function PostCard({
 
       <ConfirmModal
         open={confirmOpen}
-        title="Gönderiyi sil"
-        description="Bu gönderiyi silmek üzeresin. Bu işlem geri alınamaz."
-        confirmLabel="Sil"
-        cancelLabel="Vazgeç"
-        busyLabel="Siliniyor…"
+        title="Delete post"
+        description="You're about to delete this post. This action can't be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        busyLabel="Deleting…"
         danger
         onConfirm={handleDeleteConfirm}
         onCancel={() => setConfirmOpen(false)}

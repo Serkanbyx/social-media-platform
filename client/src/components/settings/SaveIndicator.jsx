@@ -14,7 +14,7 @@ import { cn } from "../../utils/cn.js";
  */
 export default function SaveIndicator({
   visible,
-  label = "Kaydedildi",
+  label = "Saved",
   className = "",
 }) {
   return (

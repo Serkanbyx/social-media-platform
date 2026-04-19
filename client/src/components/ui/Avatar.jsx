@@ -51,7 +51,7 @@ export default function Avatar({
   const sizeClass = SIZE_MAP[size] || SIZE_MAP.md;
   const initials = useMemo(() => initialOf(name || username), [name, username]);
   const color = useMemo(() => colorFor(username || name), [username, name]);
-  const altText = alt || name || (username ? `@${username}` : "Kullanıcı avatarı");
+  const altText = alt || name || (username ? `@${username}` : "User avatar");
 
   if (src) {
     return (

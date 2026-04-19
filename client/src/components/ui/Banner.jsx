@@ -50,7 +50,7 @@ export default function Banner({
         <button
           type="button"
           onClick={onDismiss}
-          aria-label="Kapat"
+          aria-label="Close"
           className="-mr-1 rounded-md p-1 text-current/70 transition-colors duration-fast hover:bg-black/5 dark:hover:bg-white/10"
         >
           <X className="size-3.5" aria-hidden="true" />

@@ -8,7 +8,7 @@ import PasswordInput from "../../components/ui/PasswordInput.jsx";
 import Spinner from "../../components/ui/Spinner.jsx";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const FALLBACK_ERROR = "Giriş yapılamadı. Lütfen tekrar dene.";
+const FALLBACK_ERROR = "Couldn't sign in. Please try again.";
 
 const extractServerError = (err) => {
   const data = err?.response?.data;
@@ -54,16 +54,16 @@ export default function Login() {
 
   return (
     <AuthShell
-      title="Tekrar hoş geldin"
-      subtitle="Hesabına giriş yaparak akışına devam et."
+      title="Welcome back"
+      subtitle="Sign in to your account and pick up where you left off."
       footer={
         <>
-          Hesabın yok mu?{" "}
+          Don't have an account?{" "}
           <Link
             to="/register"
             className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
           >
-            Hemen oluştur
+            Create one now
           </Link>
         </>
       }
@@ -80,7 +80,7 @@ export default function Login() {
             htmlFor="login-email"
             className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-200"
           >
-            E-posta
+            Email
           </label>
           <input
             id="login-email"
@@ -91,7 +91,7 @@ export default function Login() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="ornek@eposta.com"
+            placeholder="you@example.com"
             className="block w-full rounded-md border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-xs transition-colors duration-fast placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-brand-400"
           />
         </div>
@@ -99,7 +99,7 @@ export default function Login() {
         <PasswordInput
           id="login-password"
           name="password"
-          label="Şifre"
+          label="Password"
           autoComplete="current-password"
           required
           value={password}
@@ -110,10 +110,10 @@ export default function Login() {
         <div className="flex items-center justify-end">
           <span
             className="cursor-not-allowed text-xs text-zinc-400 dark:text-zinc-500"
-            title="Yakında"
+            title="Coming soon"
             aria-disabled="true"
           >
-            Şifremi unuttum
+            Forgot password
           </span>
         </div>
 
@@ -125,10 +125,10 @@ export default function Login() {
           {submitting ? (
             <>
               <Spinner size="sm" className="!text-white" />
-              <span>Giriş yapılıyor…</span>
+              <span>Signing in…</span>
             </>
           ) : (
-            "Giriş yap"
+            "Sign in"
           )}
         </button>
       </form>

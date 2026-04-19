@@ -113,7 +113,7 @@ function ProfileView({ username }) {
         setNotFound(true);
         setProfile(null);
       } else {
-        setProfileError("Profil yüklenemedi.");
+        setProfileError("Couldn't load profile.");
       }
     } finally {
       setProfileLoading(false);
@@ -168,7 +168,7 @@ function ProfileView({ username }) {
           setHasMore(false);
           setPostsHidden(true);
         } else {
-          setPostsError("Gönderiler yüklenemedi.");
+          setPostsError("Couldn't load posts.");
         }
       })
       .finally(() => {
@@ -235,7 +235,7 @@ function ProfileView({ username }) {
       setNextCursor(data?.nextCursor || null);
       setHasMore(Boolean(data?.hasMore));
     } catch {
-      setPostsError("Gönderiler yüklenemedi.");
+      setPostsError("Couldn't load posts.");
     } finally {
       setPostsLoading(false);
     }
@@ -270,7 +270,7 @@ function ProfileView({ username }) {
 
   // ----- Derived render branches -----
   const tabs = useMemo(
-    () => [{ id: "posts", label: "Gönderiler", icon: Grid3x3 }],
+    () => [{ id: "posts", label: "Posts", icon: Grid3x3 }],
     []
   );
 
@@ -289,7 +289,7 @@ function ProfileView({ username }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span>{profileError}</span>
             <Button variant="secondary" size="sm" onClick={fetchProfile}>
-              Tekrar dene
+              Try again
             </Button>
           </div>
         </Banner>
@@ -298,18 +298,18 @@ function ProfileView({ username }) {
       {showNotFound && !profileError && (
         <EmptyState
           icon={UserX}
-          title="Kullanıcı bulunamadı"
-          description="Bu adreste bir hesap yok ya da kaldırılmış olabilir."
-          action={{ label: "Keşfet'e git", href: "/explore" }}
+          title="User not found"
+          description="There's no account at this address, or it may have been removed."
+          action={{ label: "Go to Explore", href: "/explore" }}
         />
       )}
 
       {showInactive && (
         <EmptyState
           icon={UserX}
-          title="Bu hesap kullanılamıyor"
-          description="Hesap yönetici tarafından devre dışı bırakılmış."
-          action={{ label: "Keşfet'e git", href: "/explore" }}
+          title="This account is unavailable"
+          description="The account has been deactivated by an administrator."
+          action={{ label: "Go to Explore", href: "/explore" }}
         />
       )}
 
@@ -325,11 +325,11 @@ function ProfileView({ username }) {
             tabs={tabs}
             value={tab}
             onChange={setTab}
-            ariaLabel="Profil sekmeleri"
+            ariaLabel="Profile tabs"
           />
 
           <section
-            aria-label="Profil içeriği"
+            aria-label="Profile content"
             className="motion-safe:animate-fade-up"
           >
             {/* ----- Private gate ----- */}
@@ -343,7 +343,7 @@ function ProfileView({ username }) {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span>{postsError}</span>
                   <Button variant="secondary" size="sm" onClick={retryPosts}>
-                    Tekrar dene
+                    Try again
                   </Button>
                 </div>
               </Banner>
@@ -360,17 +360,17 @@ function ProfileView({ username }) {
                   icon={ImageIcon}
                   title={
                     isOwner
-                      ? "Henüz bir gönderi paylaşmadın"
-                      : `@${profile.username} henüz bir şey paylaşmamış`
+                      ? "You haven't posted anything yet"
+                      : `@${profile.username} hasn't posted anything yet`
                   }
                   description={
                     isOwner
-                      ? "İlk paylaşımınla burayı şenlendirebilirsin."
-                      : "Yeni bir şey paylaşıldığında burada görüneceksin."
+                      ? "Share your first post to liven things up."
+                      : "Whenever something new is posted, it'll show up here."
                   }
                   action={
                     isOwner
-                      ? { label: "Gönderi oluştur", href: "/posts/new" }
+                      ? { label: "Create post", href: "/posts/new" }
                       : undefined
                   }
                 />
@@ -385,7 +385,7 @@ function ProfileView({ username }) {
                 {paginating && (
                   <div className="flex items-center justify-center gap-2 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                     <Spinner size="md" />
-                    <span>Daha fazla yükleniyor…</span>
+                    <span>Loading more…</span>
                   </div>
                 )}
               </div>
@@ -401,7 +401,7 @@ function ProfileView({ username }) {
                     className="size-4 text-emerald-500"
                     aria-hidden="true"
                   />
-                  Tüm gönderileri gördün
+                  You've seen all the posts
                 </p>
               )}
           </section>
@@ -428,10 +428,10 @@ function PrivateGate({ user, onFollowChange }) {
         <Lock className="size-6" aria-hidden="true" />
       </span>
       <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-        Bu hesap gizli
+        This account is private
       </h2>
       <p className="max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
-        @{user.username} kullanıcısının gönderilerini görmek için takip et.
+        Follow @{user.username} to see their posts.
       </p>
 
       <div className="mt-2 inline-flex">
@@ -444,14 +444,14 @@ function PrivateGate({ user, onFollowChange }) {
       </div>
 
       <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Daha fazlasını görmek için{" "}
+        To see more, you can visit{" "}
         <Link
           to="/explore"
           className="font-medium text-brand-600 hover:underline dark:text-brand-400"
         >
-          Keşfet
+          Explore
         </Link>
-        &apos;i ziyaret edebilirsin.
+        .
       </p>
     </div>
   );

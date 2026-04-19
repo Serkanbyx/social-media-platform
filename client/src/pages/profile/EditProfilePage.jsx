@@ -94,21 +94,21 @@ const validateField = (key, value) => {
   const trimmed = (value || "").trim();
   switch (key) {
     case "name":
-      if (trimmed.length === 0) return "İsim boş olamaz.";
+      if (trimmed.length === 0) return "Name can't be empty.";
       if (trimmed.length > MAX_NAME)
-        return `İsim en fazla ${MAX_NAME} karakter olmalı.`;
+        return `Name must be at most ${MAX_NAME} characters.`;
       return "";
     case "username":
       if (trimmed.length < USERNAME_MIN)
-        return `Kullanıcı adı en az ${USERNAME_MIN} karakter olmalı.`;
+        return `Username must be at least ${USERNAME_MIN} characters.`;
       if (trimmed.length > MAX_USERNAME)
-        return `Kullanıcı adı en fazla ${MAX_USERNAME} karakter olabilir.`;
+        return `Username must be at most ${MAX_USERNAME} characters.`;
       if (!USERNAME_REGEX.test(trimmed))
-        return "Yalnızca küçük harf, rakam ve alt çizgi (_) kullanılabilir.";
+        return "Only lowercase letters, digits, and underscores (_) are allowed.";
       return "";
     case "bio":
       if (trimmed.length > MAX_BIO)
-        return `Biyografi en fazla ${MAX_BIO} karakter olabilir.`;
+        return `Bio must be at most ${MAX_BIO} characters.`;
       return "";
     default:
       return "";
@@ -119,23 +119,20 @@ export default function EditProfilePage() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  useDocumentTitle("Profili düzenle");
+  useDocumentTitle("Edit profile");
 
   if (!user) {
     return (
       <div
         className="flex items-center justify-center py-16"
         aria-busy="true"
-        aria-label="Yükleniyor"
+        aria-label="Loading"
       >
         <Spinner size="lg" />
       </div>
     );
   }
 
-  // Re-mount the inner form whenever the auth user identity changes so
-  // baseline/form state always starts from the latest user payload —
-  // cheaper and safer than syncing it inside an effect.
   return (
     <EditProfileForm
       key={String(user._id)}
@@ -167,14 +164,8 @@ function EditProfileForm({ user, updateUser, navigate }) {
   const [serverError, setServerError] = useState("");
   const [usernameConfirmOpen, setUsernameConfirmOpen] = useState(false);
 
-  // Snapshot of what the form looked like on mount / after the last save.
-  // Tracked as state (not a ref) so the dirty-flag memo can react to a
-  // re-baseline triggered by a successful save. The parent re-mounts
-  // this component on user-id change, so we never need an effect to
-  // re-sync the baseline from props.
   const [baseline, setBaseline] = useState(() => initialFormFromUser(user));
 
-  // ----- Object URL lifecycle -----
   useEffect(
     () => () => {
       if (previewUrlRef.current) {
@@ -201,7 +192,6 @@ function EditProfileForm({ user, updateUser, navigate }) {
     setSelectedFile(file);
   }, []);
 
-  // ----- Photo handlers -----
   const onPickPhoto = () => fileInputRef.current?.click();
 
   const onFileChange = (event) => {
@@ -210,12 +200,12 @@ function EditProfileForm({ user, updateUser, navigate }) {
     if (!file) return;
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setPhotoError("Yalnızca JPG, PNG, WEBP veya GIF formatları desteklenir.");
+      setPhotoError("Only JPG, PNG, WEBP or GIF formats are supported.");
       return;
     }
     const maxBytes = MAX_AVATAR_MB * 1024 * 1024;
     if (file.size > maxBytes) {
-      setPhotoError(`Görsel çok büyük (en fazla ${MAX_AVATAR_MB} MB).`);
+      setPhotoError(`Image is too large (max ${MAX_AVATAR_MB} MB).`);
       return;
     }
 
@@ -255,10 +245,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
       setPhotoSuccess(true);
       window.setTimeout(() => setPhotoSuccess(false), 320);
 
-      notify.success("Profil fotoğrafı güncellendi.");
+      notify.success("Profile photo updated.");
     } catch (error) {
       const message =
-        error?.response?.data?.message || "Fotoğraf yüklenemedi.";
+        error?.response?.data?.message || "Couldn't upload photo.";
       setPhotoError(message);
       notify.error(message);
     } finally {
@@ -275,10 +265,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
       await uploadService.deleteAvatar();
       updateUser({ avatar: { url: "", publicId: "" } });
       setPreviewFromFile(null);
-      notify.success("Profil fotoğrafı kaldırıldı.");
+      notify.success("Profile photo removed.");
     } catch (error) {
       const message =
-        error?.response?.data?.message || "Fotoğraf kaldırılamadı.";
+        error?.response?.data?.message || "Couldn't remove photo.";
       setPhotoError(message);
       notify.error(message);
     } finally {
@@ -286,12 +276,9 @@ function EditProfileForm({ user, updateUser, navigate }) {
     }
   };
 
-  // ----- Profile info handlers -----
   const handleFieldChange = (key) => (event) => {
     let nextValue = event.target.value;
     if (key === "username") {
-      // Force the canonical lowercase form so the live preview never
-      // drifts from what the server will accept.
       nextValue = nextValue.toLowerCase();
     }
     setForm((prev) => ({ ...prev, [key]: nextValue }));
@@ -338,7 +325,6 @@ function EditProfileForm({ user, updateUser, navigate }) {
 
   const canSubmit = isFormValid && infoDirty && !saving;
 
-  // ----- Submit flow -----
   const performSave = useCallback(async () => {
     setSaving(true);
     setServerError("");
@@ -351,8 +337,6 @@ function EditProfileForm({ user, updateUser, navigate }) {
       const data = await userService.updateProfile(payload);
 
       const updated = data?.user || {};
-      // Reflect the server-canonical values back into auth + the
-      // baseline so the dirty flag drops to false right away.
       updateUser({
         name: decodeEntities(updated.name || trimmedForm.name),
         username: updated.username || trimmedForm.username,
@@ -370,15 +354,15 @@ function EditProfileForm({ user, updateUser, navigate }) {
       setInfoSuccess(true);
       window.setTimeout(() => setInfoSuccess(false), 320);
 
-      notify.success("Profil güncellendi.");
+      notify.success("Profile updated.");
     } catch (error) {
       const status = error?.response?.status;
       const apiErrors = error?.response?.data?.errors;
       let message =
-        error?.response?.data?.message || "Profil güncellenemedi.";
+        error?.response?.data?.message || "Couldn't update profile.";
 
       if (status === 409) {
-        message = "Bu kullanıcı adı zaten alınmış.";
+        message = "This username is already taken.";
         setErrors((prev) => ({ ...prev, username: message }));
       } else if (Array.isArray(apiErrors) && apiErrors.length > 0) {
         const fieldMap = { name: "", username: "", bio: "" };
@@ -421,7 +405,6 @@ function EditProfileForm({ user, updateUser, navigate }) {
     await performSave();
   };
 
-  // ----- Dirty-state guards -----
   const dirty = infoDirty || Boolean(selectedFile);
   const unsaved = useUnsavedChangesPrompt(dirty);
 
@@ -437,17 +420,13 @@ function EditProfileForm({ user, updateUser, navigate }) {
   };
 
   const confirmCancel = () => {
-    // Drop pending photo selection so the dirty flag clears before
-    // navigation triggers the unsaved-changes blocker.
     setPreviewFromFile(null);
     setForm(initialFormFromUser(user));
     setErrors({ name: "", username: "", bio: "" });
     setCancelOpen(false);
-    // Defer navigation a tick so the dirty-clearing state lands first.
     window.setTimeout(() => navigate(profileHref), 0);
   };
 
-  // ----- Render -----
   const hasAvatar = Boolean(user.avatar?.url);
   const showingPreview = Boolean(selectedFile);
 
@@ -457,22 +436,22 @@ function EditProfileForm({ user, updateUser, navigate }) {
         {/* ----- Header ----- */}
         <header>
           <nav
-            aria-label="Sayfa konumu"
+            aria-label="Page location"
             className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400"
           >
             <Link
               to={profileHref}
               className="rounded-md transition-colors duration-fast hover:text-zinc-700 hover:underline dark:hover:text-zinc-200"
             >
-              Profil
+              Profile
             </Link>
             <ChevronRight className="size-3.5" aria-hidden="true" />
-            <span className="text-zinc-700 dark:text-zinc-300">Düzenle</span>
+            <span className="text-zinc-700 dark:text-zinc-300">Edit</span>
           </nav>
 
           <div className="mt-2 flex items-center justify-between gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Profili düzenle
+              Edit profile
             </h1>
             <Button
               variant="ghost"
@@ -480,7 +459,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
               onClick={onClickCancel}
               disabled={uploading || saving || removing}
             >
-              Vazgeç
+              Cancel
             </Button>
           </div>
         </header>
@@ -491,15 +470,14 @@ function EditProfileForm({ user, updateUser, navigate }) {
             id="photo-heading"
             className="text-base font-semibold text-zinc-900 dark:text-zinc-50"
           >
-            Profil fotoğrafı
+            Profile photo
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            JPG, PNG, WEBP veya GIF · en fazla {MAX_AVATAR_MB} MB.
+            JPG, PNG, WEBP or GIF · max {MAX_AVATAR_MB} MB.
           </p>
 
           <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
             <div className="relative">
-              {/* Cross-fade between the saved avatar and the local preview. */}
               <div className="relative size-20 sm:size-24">
                 <div
                   className={cn(
@@ -526,7 +504,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
                   {previewUrl && (
                     <img
                       src={previewUrl}
-                      alt="Yeni profil fotoğrafı önizlemesi"
+                      alt="New profile photo preview"
                       className="size-20 rounded-full object-cover ring-1 ring-zinc-200 sm:size-24 dark:ring-zinc-800"
                     />
                   )}
@@ -556,10 +534,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
                       disabled={uploading}
                     >
                       {photoSuccess
-                        ? "Kaydedildi"
+                        ? "Saved"
                         : uploading
-                          ? "Yükleniyor…"
-                          : "Kaydet"}
+                          ? "Uploading…"
+                          : "Save"}
                     </Button>
                     <Button
                       variant="ghost"
@@ -567,7 +545,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
                       onClick={cancelPhotoPreview}
                       disabled={uploading}
                     >
-                      Vazgeç
+                      Cancel
                     </Button>
                   </>
                 ) : (
@@ -579,7 +557,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
                       onClick={onPickPhoto}
                       disabled={removing}
                     >
-                      Fotoğrafı değiştir
+                      Change photo
                     </Button>
                     {hasAvatar && (
                       <Button
@@ -591,7 +569,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
                         disabled={removing}
                         className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
                       >
-                        Kaldır
+                        Remove
                       </Button>
                     )}
                   </>
@@ -604,7 +582,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={uploadProgress}
-                  aria-label="Yükleme ilerlemesi"
+                  aria-label="Upload progress"
                   className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                 >
                   <div
@@ -632,7 +610,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
             onChange={onFileChange}
             className="hidden"
             tabIndex={-1}
-            aria-label="Profil fotoğrafı seç"
+            aria-label="Choose profile photo"
           />
         </Card>
 
@@ -648,10 +626,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
             id="info-heading"
             className="text-base font-semibold text-zinc-900 dark:text-zinc-50"
           >
-            Profil bilgileri
+            Profile info
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Görünen ad, kullanıcı adı ve biyografini düzenle.
+            Edit your display name, username, and bio.
           </p>
 
           {serverError && (
@@ -662,13 +640,13 @@ function EditProfileForm({ user, updateUser, navigate }) {
 
           <div className="mt-4 space-y-4">
             <Input
-              label="Ad"
+              label="Name"
               required
               type="text"
               value={form.name}
               onChange={handleFieldChange("name")}
               error={errors.name || undefined}
-              helper={`1–${MAX_NAME} karakter.`}
+              helper={`1–${MAX_NAME} characters.`}
               leftAddon={<UserIcon className="size-4" aria-hidden="true" />}
               maxLength={MAX_NAME}
               autoComplete="name"
@@ -677,14 +655,14 @@ function EditProfileForm({ user, updateUser, navigate }) {
 
             <div>
               <Input
-                label="Kullanıcı adı"
+                label="Username"
                 required
                 type="text"
                 inputMode="text"
                 value={form.username}
                 onChange={handleFieldChange("username")}
                 error={errors.username || undefined}
-                helper={`Yalnızca küçük harf, rakam ve _ · ${USERNAME_MIN}–${MAX_USERNAME} karakter.`}
+                helper={`Lowercase letters, digits and _ only · ${USERNAME_MIN}–${MAX_USERNAME} characters.`}
                 leftAddon={<AtSign className="size-4" aria-hidden="true" />}
                 maxLength={MAX_USERNAME}
                 autoComplete="username"
@@ -696,12 +674,12 @@ function EditProfileForm({ user, updateUser, navigate }) {
                 className="mt-2 inline-flex max-w-full items-center gap-1.5 truncate rounded-md bg-zinc-50 px-2.5 py-1 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300"
               >
                 <span className="text-zinc-400 dark:text-zinc-500">
-                  Profil URL:
+                  Profile URL:
                 </span>
                 <span className="truncate font-medium text-zinc-700 dark:text-zinc-200">
                   {PROFILE_URL_PREFIX}
                   <span className="text-brand-600 dark:text-brand-400">
-                    {trimmedForm.username || "kullaniciadi"}
+                    {trimmedForm.username || "username"}
                   </span>
                 </span>
               </p>
@@ -709,17 +687,17 @@ function EditProfileForm({ user, updateUser, navigate }) {
 
             <div>
               <Textarea
-                label="Biyografi"
+                label="Bio"
                 value={form.bio}
                 onChange={handleFieldChange("bio")}
                 error={errors.bio || undefined}
-                helper={`Kendinden kısaca bahset · en fazla ${MAX_BIO} karakter.`}
+                helper={`Briefly tell people about yourself · max ${MAX_BIO} characters.`}
                 rows={4}
                 autoResize
                 maxHeight={240}
                 maxLength={MAX_BIO}
                 disabled={saving}
-                placeholder="Birkaç kelimeyle kendini tanıt…"
+                placeholder="Introduce yourself in a few words…"
               />
               <div className="mt-1 flex justify-end">
                 <CharacterCounter
@@ -739,7 +717,7 @@ function EditProfileForm({ user, updateUser, navigate }) {
               onClick={onClickCancel}
               disabled={saving}
             >
-              Vazgeç
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -750,10 +728,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
               leftIcon={infoSuccess ? Check : undefined}
             >
               {infoSuccess
-                ? "Kaydedildi"
+                ? "Saved"
                 : saving
-                  ? "Kaydediliyor…"
-                  : "Kaydet"}
+                  ? "Saving…"
+                  : "Save"}
             </Button>
           </div>
         </Card>
@@ -762,10 +740,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
       {/* ----- Username change confirmation ----- */}
       <ConfirmModal
         open={usernameConfirmOpen}
-        title="Kullanıcı adı değiştirilsin mi?"
-        description={`Profil bağlantın @${baselineTrimmed.username} adresinden @${trimmedForm.username} adresine taşınacak. Eski bağlantılar artık çalışmayabilir.`}
-        confirmLabel="Evet, değiştir"
-        cancelLabel="Vazgeç"
+        title="Change username?"
+        description={`Your profile link will move from @${baselineTrimmed.username} to @${trimmedForm.username}. Old links may no longer work.`}
+        confirmLabel="Yes, change"
+        cancelLabel="Cancel"
         onConfirm={confirmUsernameChange}
         onCancel={() => setUsernameConfirmOpen(false)}
       />
@@ -773,10 +751,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
       {/* ----- Cancel-with-dirty-form confirmation ----- */}
       <ConfirmModal
         open={cancelOpen}
-        title="Değişiklikleri at"
-        description="Kaydedilmemiş değişiklikler kaybolacak. Devam etmek istiyor musun?"
-        confirmLabel="At ve çık"
-        cancelLabel="Düzenlemeye dön"
+        title="Discard changes"
+        description="Your unsaved changes will be lost. Do you want to continue?"
+        confirmLabel="Discard and leave"
+        cancelLabel="Keep editing"
         danger
         onConfirm={confirmCancel}
         onCancel={() => setCancelOpen(false)}
@@ -785,10 +763,10 @@ function EditProfileForm({ user, updateUser, navigate }) {
       {/* ----- Router-level navigation guard ----- */}
       <ConfirmModal
         open={unsaved.open}
-        title="Kaydedilmemiş değişiklikler var"
-        description="Sayfadan ayrılırsan değişikliklerin kaybolur. Yine de çıkılsın mı?"
-        confirmLabel="Çık"
-        cancelLabel="Kal"
+        title="You have unsaved changes"
+        description="If you leave the page, your changes will be lost. Leave anyway?"
+        confirmLabel="Leave"
+        cancelLabel="Stay"
         danger
         onConfirm={unsaved.confirmLeave}
         onCancel={unsaved.cancelLeave}

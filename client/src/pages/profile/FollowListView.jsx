@@ -133,7 +133,7 @@ function FollowListInner({ username, tab }) {
     Boolean(profile) &&
     String(viewer._id) === String(profile._id);
 
-  const tabLabel = tab === "followers" ? "Takipçiler" : "Takip edilen";
+  const tabLabel = tab === "followers" ? "Followers" : "Following";
   useDocumentTitle(
     profile
       ? `@${profile.username} · ${tabLabel}`
@@ -154,7 +154,7 @@ function FollowListInner({ username, tab }) {
         setNotFound(true);
         setProfile(null);
       } else {
-        setProfileError("Profil yüklenemedi.");
+        setProfileError("Couldn't load profile.");
       }
     } finally {
       setProfileLoading(false);
@@ -201,7 +201,7 @@ function FollowListInner({ username, tab }) {
         setItems([]);
         setHasMore(false);
       } else {
-        setListError("Liste yüklenemedi.");
+        setListError("Couldn't load list.");
       }
     } finally {
       if (requestIdRef.current === requestId) {
@@ -334,12 +334,12 @@ function FollowListInner({ username, tab }) {
     () => [
       {
         id: "followers",
-        label: `Takipçi · ${compactCount(profile?.followersCount ?? 0)}`,
+        label: `Followers · ${compactCount(profile?.followersCount ?? 0)}`,
         icon: Users,
       },
       {
         id: "following",
-        label: `Takip · ${compactCount(profile?.followingCount ?? 0)}`,
+        label: `Following · ${compactCount(profile?.followingCount ?? 0)}`,
         icon: UserCheck,
       },
     ],
@@ -385,9 +385,9 @@ function FollowListInner({ username, tab }) {
     return (
       <EmptyState
         icon={UserX}
-        title="Kullanıcı bulunamadı"
-        description="Bu adreste bir hesap yok ya da kaldırılmış olabilir."
-        action={{ label: "Keşfet'e git", href: "/explore" }}
+        title="User not found"
+        description="There's no account at this address, or it may have been removed."
+        action={{ label: "Go to Explore", href: "/explore" }}
       />
     );
   }
@@ -396,9 +396,9 @@ function FollowListInner({ username, tab }) {
     return (
       <EmptyState
         icon={UserX}
-        title="Bu hesap kullanılamıyor"
-        description="Hesap yönetici tarafından devre dışı bırakılmış."
-        action={{ label: "Keşfet'e git", href: "/explore" }}
+        title="This account is unavailable"
+        description="The account has been deactivated by an administrator."
+        action={{ label: "Go to Explore", href: "/explore" }}
       />
     );
   }
@@ -413,7 +413,7 @@ function FollowListInner({ username, tab }) {
           icon={ArrowLeft}
           size="sm"
           variant="ghost"
-          aria-label={`@${normalisedUsername} profiline dön`}
+          aria-label={`Back to @${normalisedUsername} profile`}
         />
         {profileLoading || !profile ? (
           <div className="flex min-w-0 items-center gap-2">
@@ -443,7 +443,7 @@ function FollowListInner({ username, tab }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span>{profileError}</span>
             <Button variant="secondary" size="sm" onClick={fetchProfile}>
-              Tekrar dene
+              Try again
             </Button>
           </div>
         </Banner>
@@ -454,7 +454,7 @@ function FollowListInner({ username, tab }) {
         tabs={tabs}
         value={tab}
         onChange={handleTabChange}
-        ariaLabel="Takipçi ve takip sekmeleri"
+        ariaLabel="Followers and following tabs"
       />
 
       {/* ----- Sticky search ----- */}
@@ -474,13 +474,13 @@ function FollowListInner({ username, tab }) {
           maxLength={80}
           placeholder={
             tab === "followers"
-              ? "Takipçilerde ara"
-              : "Takip edilenlerde ara"
+              ? "Search followers"
+              : "Search following"
           }
           aria-label={
             tab === "followers"
-              ? "Takipçilerde ara"
-              : "Takip edilenlerde ara"
+              ? "Search followers"
+              : "Search following"
           }
           autoComplete="off"
           spellCheck={false}
@@ -493,7 +493,7 @@ function FollowListInner({ username, tab }) {
                 icon={X}
                 size="sm"
                 variant="ghost"
-                aria-label="Aramayı temizle"
+                aria-label="Clear search"
                 onClick={handleClearQuery}
               />
             ) : null
@@ -514,7 +514,7 @@ function FollowListInner({ username, tab }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>{listError}</span>
               <Button variant="secondary" size="sm" onClick={fetchList}>
-                Tekrar dene
+                Try again
               </Button>
             </div>
           </Banner>
@@ -527,8 +527,8 @@ function FollowListInner({ username, tab }) {
         ) : filteredItems.length === 0 ? (
           <EmptyState
             icon={SearchX}
-            title="Sonuç bulunamadı"
-            description={`"${query.trim()}" ile eşleşen kimse yok.`}
+            title="No results found"
+            description={`No one matches "${query.trim()}".`}
           />
         ) : (
           <>
@@ -556,7 +556,7 @@ function FollowListInner({ username, tab }) {
                 {paginating && (
                   <div className="flex items-center justify-center gap-2 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                     <Spinner size="md" />
-                    <span>Daha fazla yükleniyor…</span>
+                    <span>Loading more…</span>
                   </div>
                 )}
               </div>
@@ -564,7 +564,7 @@ function FollowListInner({ username, tab }) {
 
             {!hasMore && items.length > 0 && !debouncedQuery && (
               <p className="py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                Listenin sonuna geldin
+                You've reached the end of the list
               </p>
             )}
           </>
@@ -575,8 +575,8 @@ function FollowListInner({ username, tab }) {
       <Modal
         open={authPromptOpen}
         onClose={() => setAuthPromptOpen(false)}
-        title="Takip etmek için giriş yap"
-        description="Bir hesap aç ya da giriş yap; takip ettiklerin akışında belirir."
+        title="Sign in to follow"
+        description="Create an account or sign in; the people you follow will show up in your feed."
         size="sm"
         footer={
           <>
@@ -585,7 +585,7 @@ function FollowListInner({ username, tab }) {
               size="sm"
               onClick={() => setAuthPromptOpen(false)}
             >
-              Vazgeç
+              Cancel
             </Button>
             <Button
               variant="secondary"
@@ -595,7 +595,7 @@ function FollowListInner({ username, tab }) {
                 navigate("/register");
               }}
             >
-              Kayıt ol
+              Sign up
             </Button>
             <Button
               variant="primary"
@@ -605,12 +605,12 @@ function FollowListInner({ username, tab }) {
                 navigate("/login");
               }}
             >
-              Giriş yap
+              Sign in
             </Button>
           </>
         }
       >
-        <p>Hesabınla anında geri döneceksin — bulunduğun konum korunur.</p>
+        <p>You'll be back instantly — your position on the page is preserved.</p>
       </Modal>
     </div>
   );
@@ -628,17 +628,17 @@ function renderEmpty({ tab, isOwner, username }) {
       return (
         <EmptyState
           icon={Users}
-          title="Henüz takipçin yok"
-          description="İlk gönderini paylaşarak fark edilmeye başla."
-          action={{ label: "Gönderi oluştur", href: "/posts/new" }}
+          title="You don't have any followers yet"
+          description="Share your first post to get noticed."
+          action={{ label: "Create post", href: "/posts/new" }}
         />
       );
     }
     return (
       <EmptyState
         icon={Users}
-        title={`@${username} kullanıcısının takipçisi yok`}
-        description="İlk takipçi sen olabilirsin."
+        title={`@${username} has no followers`}
+        description="You could be the first follower."
       />
     );
   }
@@ -647,17 +647,17 @@ function renderEmpty({ tab, isOwner, username }) {
     return (
       <EmptyState
         icon={UserPlus}
-        title="Henüz kimseyi takip etmiyorsun"
-        description="Keşfet sayfasından ilgini çeken hesapları bul."
-        action={{ label: "Keşfet'e git", href: "/explore" }}
+        title="You're not following anyone yet"
+        description="Find accounts you're interested in on the Explore page."
+        action={{ label: "Go to Explore", href: "/explore" }}
       />
     );
   }
   return (
     <EmptyState
       icon={UserPlus}
-      title={`@${username} kimseyi takip etmiyor`}
-      description="Yeni hesapları takip ettiğinde burada görünecekler."
+      title={`@${username} isn't following anyone`}
+      description="When they follow new accounts, they'll show up here."
     />
   );
 }
@@ -679,13 +679,13 @@ function PrivateGate({ username }) {
         <Lock className="size-6" aria-hidden="true" />
       </span>
       <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-        Bu hesap gizli
+        This account is private
       </h2>
       <p className="max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
-        @{username} kullanıcısının takip listesini görmek için takip etmen gerek.
+        You need to follow @{username} to see their follow list.
       </p>
       <Button as={Link} to={`/u/${username}`} variant="secondary" size="sm">
-        Profile dön
+        Back to profile
       </Button>
     </div>
   );

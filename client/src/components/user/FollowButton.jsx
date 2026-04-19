@@ -22,9 +22,9 @@ import * as userService from "../../services/userService.js";
  *    redirecting to `/login` or opening a centered prompt modal
  *    (Explore's "Sign in to interact" pattern).
  *  - Self-aware: viewing your own card never renders a follow button.
- *  - Three visual states: not following → primary "Takip et", following
- *    → secondary "Takipte" that morphs to a danger "Çıkar" on hover so
- *    the destructive action is always discoverable yet never accidental.
+ *  - Three visual states: not following → primary "Follow", following
+ *    → secondary "Following" that morphs to a danger "Unfollow" on hover
+ *    so the destructive action is always discoverable yet never accidental.
  *
  * The component intentionally accepts a flat `userId` + `isFollowing`
  * pair rather than the full user document so it stays decoupled from any
@@ -79,7 +79,7 @@ function FollowButton({
       });
     } catch {
       setFollowing(!nextFollowing);
-      notify.error("Takip durumu güncellenemedi.");
+      notify.error("Couldn't update follow status.");
     } finally {
       setBusy(false);
       setHovered(false);
@@ -91,17 +91,17 @@ function FollowButton({
   const showUnfollowAffordance = following && hovered;
 
   let variant = "primary";
-  let label = "Takip et";
+  let label = "Follow";
   let Icon = UserPlus;
 
   if (following) {
     if (showUnfollowAffordance) {
       variant = "danger";
-      label = "Çıkar";
+      label = "Unfollow";
       Icon = UserMinus;
     } else {
       variant = "secondary";
-      label = "Takipte";
+      label = "Following";
       Icon = UserCheck;
     }
   }
@@ -121,7 +121,7 @@ function FollowButton({
       onBlur={() => setHovered(false)}
       aria-pressed={following}
       aria-label={
-        following ? "Takipten çıkar" : "Takip et"
+        following ? "Unfollow" : "Follow"
       }
       className={cn("min-w-[88px]", className)}
     >

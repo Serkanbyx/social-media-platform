@@ -16,7 +16,7 @@ import useDocumentTitle from "../../hooks/useDocumentTitle.js";
  * only exposes the switches.
  */
 export default function PrivacySettings() {
-  useDocumentTitle("Gizlilik · Ayarlar");
+  useDocumentTitle("Privacy · Settings");
 
   const { preferences } = usePreferences();
   const { save, savedKey } = usePreferenceAutoSave();
@@ -34,8 +34,8 @@ export default function PrivacySettings() {
   return (
     <div className="space-y-6">
       <SettingsSection
-        title="Hesap gizliliği"
-        description="Hesabını yalnızca onayladığın takipçilere gösterilecek şekilde sınırla."
+        title="Account privacy"
+        description="Restrict your account so only approved followers can see it."
         action={
           <SaveIndicator visible={savedKey === "privacy.privateAccount"} />
         }
@@ -43,31 +43,31 @@ export default function PrivacySettings() {
         <ToggleSwitch
           checked={preferences.privacy?.privateAccount}
           onChange={onTogglePrivate}
-          label="Özel hesap"
-          description="Açık olduğunda yalnızca onaylanmış takipçilerin gönderilerini görebilir. (Onay akışı MVP'de yok — takipçiler otomatik onaylanır, ancak profil içeriği yine gizlenir.)"
+          label="Private account"
+          description="When on, only approved followers can see your posts. (Approval flow isn't in the MVP — followers are auto-approved, but profile content is still hidden.)"
         />
       </SettingsSection>
 
       <SettingsSection
-        title="E-postayı profilde göster"
-        description="Açıkken e-posta adresin profil sayfanda diğer kullanıcılara görünür."
+        title="Show email on profile"
+        description="When on, your email address is visible to other users on your profile page."
         action={<SaveIndicator visible={savedKey === "privacy.showEmail"} />}
       >
         <ToggleSwitch
           checked={preferences.privacy?.showEmail}
           onChange={onToggleShowEmail}
-          label="E-postayı paylaş"
-          description="Kapalıyken e-posta adresini yalnızca sen görürsün."
+          label="Share email"
+          description="When off, only you can see your email address."
         />
       </SettingsSection>
 
       <SettingsSection
-        title="Engellenen kullanıcılar"
-        description="Engellediğin kullanıcılar burada listelenecek."
+        title="Blocked users"
+        description="Users you've blocked will be listed here."
         action={
           <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-2xs font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
             <Lock className="size-3" aria-hidden="true" />
-            Yakında
+            Coming soon
           </span>
         }
       >
@@ -76,7 +76,7 @@ export default function PrivacySettings() {
             <ShieldOff className="size-4" aria-hidden="true" />
           </span>
           <p className="min-w-0 flex-1">
-            Henüz kimseyi engellemedin. Engelleme akışı yakında geliyor.
+            You haven't blocked anyone yet. The blocking flow is coming soon.
           </p>
         </div>
       </SettingsSection>

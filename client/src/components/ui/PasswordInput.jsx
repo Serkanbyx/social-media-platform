@@ -81,7 +81,7 @@ const PasswordInput = forwardRef(function PasswordInput(
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          aria-label={visible ? "Şifreyi gizle" : "Şifreyi göster"}
+          aria-label={visible ? "Hide password" : "Show password"}
           aria-pressed={visible}
           aria-controls={inputId}
           tabIndex={0}

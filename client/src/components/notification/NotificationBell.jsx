@@ -100,14 +100,14 @@ function ConnectionDot() {
       role="status"
     >
       <span className="size-1.5 animate-pulse rounded-full bg-amber-500" />
-      Bağlanılıyor…
+      Reconnecting…
     </span>
   );
 }
 
 function MiniListItem({ notification, onClose }) {
   const sender = notification.sender || {};
-  const senderName = sender.name || sender.username || "Birisi";
+  const senderName = sender.name || sender.username || "Someone";
   return (
     <li>
       <Link
@@ -161,7 +161,7 @@ function PopoverContent({ onClose }) {
     <div className="flex w-80 flex-col">
       <header className="flex items-center justify-between gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Bildirimler
+          Notifications
         </span>
         <div className="flex items-center gap-2">
           <ConnectionDot />
@@ -173,7 +173,7 @@ function PopoverContent({ onClose }) {
             disabled={unreadCount === 0}
             className="text-2xs font-medium text-brand-700 transition-colors duration-fast hover:text-brand-800 disabled:cursor-not-allowed disabled:text-zinc-400 dark:text-brand-300 dark:hover:text-brand-200 dark:disabled:text-zinc-600"
           >
-            Tümünü okundu işaretle
+            Mark all as read
           </button>
         </div>
       </header>
@@ -192,7 +192,7 @@ function PopoverContent({ onClose }) {
         </ul>
       ) : preview.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-zinc-500">
-          Henüz bir bildirimin yok.
+          You have no notifications yet.
         </p>
       ) : (
         <ul className="max-h-80 divide-y divide-zinc-100 overflow-y-auto dark:divide-zinc-800">
@@ -211,7 +211,7 @@ function PopoverContent({ onClose }) {
         onClick={onClose}
         className="border-t border-zinc-100 px-3 py-2.5 text-center text-xs font-medium text-brand-700 transition-colors duration-fast hover:bg-brand-50 dark:border-zinc-800 dark:text-brand-300 dark:hover:bg-brand-950/30"
       >
-        Tümünü gör
+        See all
       </Link>
     </div>
   );
@@ -222,8 +222,8 @@ export default function NotificationBell() {
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   const ariaLabel = unreadCount
-    ? `Bildirimler, ${unreadCount} okunmamış`
-    : "Bildirimler";
+    ? `Notifications, ${unreadCount} unread`
+    : "Notifications";
 
   if (isMobile) {
     return (

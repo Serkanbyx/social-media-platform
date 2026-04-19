@@ -17,10 +17,10 @@ export default function CreatePostPage() {
           id="create-post-title"
           className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
         >
-          Yeni gönderi
+          New post
         </h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Bir düşünceni, bağlantıyı ya da görseli toplulukla paylaş.
+          Share a thought, a link, or an image with the community.
         </p>
       </header>
 

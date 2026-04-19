@@ -63,16 +63,16 @@ function GuestThemeToggle() {
   const Icon = theme === "dark" ? Sun : theme === "light" ? Moon : Monitor;
   const label =
     theme === "system"
-      ? "Tema: sistem"
+      ? "Theme: system"
       : theme === "light"
-      ? "Tema: aydınlık"
-      : "Tema: karanlık";
+      ? "Theme: light"
+      : "Theme: dark";
 
   return (
     <button
       type="button"
       onClick={cycle}
-      aria-label={`${label}. Değiştirmek için tıkla.`}
+      aria-label={`${label}. Click to change.`}
       className="inline-flex size-9 items-center justify-center rounded-full bg-white/80 text-zinc-700 shadow-xs ring-1 ring-zinc-200 backdrop-blur transition-colors duration-fast hover:bg-white hover:text-zinc-900 dark:bg-zinc-900/70 dark:text-zinc-200 dark:ring-zinc-800 dark:hover:bg-zinc-900"
     >
       <Icon className="size-4" aria-hidden="true" />
@@ -123,24 +123,24 @@ function BrandPanel() {
 
       <div className="relative z-10 max-w-md space-y-4">
         <h1 className="text-3xl font-semibold leading-tight tracking-tight">
-          Bağlan, paylaş, keşfet.
+          Connect, share, discover.
         </h1>
         <p className="text-base text-brand-100/90">
-          Pulse, ilgilendiğin insanlarla anlık olarak bağlantıda kalmanı
-          sağlayan minimal bir sosyal alan.
+          Pulse is a minimal social space that keeps you in real-time touch
+          with the people you care about.
         </p>
         <ul className="space-y-2 text-sm text-brand-100/80">
           <li className="flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-white/80" aria-hidden="true" />
-            Reklamsız, sade bir akış deneyimi
+            An ad-free, distraction-light feed
           </li>
           <li className="flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-white/80" aria-hidden="true" />
-            Anlık bildirimler ve canlı etkileşim
+            Real-time notifications and live engagement
           </li>
           <li className="flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-white/80" aria-hidden="true" />
-            Aydınlık ve karanlık tema desteği
+            Light and dark theme support
           </li>
         </ul>
       </div>
@@ -165,7 +165,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
         <div className="w-full max-w-md">
           <Link
             to="/"
-            aria-label="Pulse ana sayfa"
+            aria-label="Pulse home"
             className="mb-8 inline-flex items-center text-brand-600 lg:hidden dark:text-brand-400"
           >
             <img src={logoUrl} alt="Pulse" className="h-7 w-auto" />
@@ -199,14 +199,14 @@ export default function AuthShell({ title, subtitle, children, footer }) {
           )}
 
           <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-500">
-            Devam ederek{" "}
+            By continuing, you agree to our{" "}
             <a
               href="#"
               className="underline decoration-dotted underline-offset-2 hover:text-zinc-600 dark:hover:text-zinc-300"
             >
-              Kullanım Şartları
+              Terms of Service
             </a>
-            &apos;nı kabul etmiş olursun.
+            .
           </p>
         </div>
       </main>

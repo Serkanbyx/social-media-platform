@@ -8,12 +8,12 @@
  * minimum requirement.
  */
 export const STRENGTH_LABELS = [
-  "Çok zayıf",
-  "Zayıf",
-  "Orta",
-  "İyi",
-  "Güçlü",
-  "Çok güçlü",
+  "Very weak",
+  "Weak",
+  "Fair",
+  "Good",
+  "Strong",
+  "Very strong",
 ];
 
 export const STRENGTH_COLORS = [

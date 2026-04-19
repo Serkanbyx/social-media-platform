@@ -113,12 +113,12 @@ function PostDetailView({ postId }) {
   useAutoResizeTextarea(textareaRef, draft, { maxHeight: 240 });
 
   const docTitle = useMemo(() => {
-    if (notFound) return "Gönderi bulunamadı";
-    if (!post) return "Gönderi";
+    if (notFound) return "Post not found";
+    if (!post) return "Post";
     const author =
       post.author?.name ||
       (post.author?.username ? `@${post.author.username}` : "Pulse");
-    return `${author} kullanıcısının gönderisi`;
+    return `Post by ${author}`;
   }, [notFound, post]);
 
   useDocumentTitle(docTitle);
@@ -156,7 +156,7 @@ function PostDetailView({ postId }) {
         if (error?.response?.status === 404) {
           setNotFound(true);
         } else {
-          notify.error("Gönderi yüklenemedi.");
+          notify.error("Couldn't load post.");
           setNotFound(true);
         }
       } finally {
@@ -180,7 +180,7 @@ function PostDetailView({ postId }) {
           setComments([]);
           setHasMore(false);
         } else {
-          setCommentsError("Yorumlar yüklenemedi.");
+          setCommentsError("Couldn't load comments.");
         }
       } finally {
         if (!cancelled) setCommentsLoading(false);
@@ -254,7 +254,7 @@ function PostDetailView({ postId }) {
       setHasMore(page.hasMore);
       setCommentsError("");
     } catch {
-      setCommentsError("Yorumlar yenilenemedi.");
+      setCommentsError("Couldn't refresh comments.");
     } finally {
       setCommentsLoading(false);
     }
@@ -290,7 +290,7 @@ function PostDetailView({ postId }) {
         // Return focus to the textarea so the user can keep replying
         // without grabbing their cursor again.
         requestAnimationFrame(() => textareaRef.current?.focus());
-        notify.success("Yorum eklendi.");
+        notify.success("Comment added.");
       } catch (error) {
         const errors = error?.response?.data?.errors;
         if (Array.isArray(errors) && errors.length > 0) {
@@ -302,10 +302,10 @@ function PostDetailView({ postId }) {
           );
         } else {
           setComposerError(
-            error?.response?.data?.message || "Yorum eklenemedi."
+            error?.response?.data?.message || "Couldn't add comment."
           );
         }
-        notify.error("Yorum eklenemedi.");
+        notify.error("Couldn't add comment.");
       } finally {
         setSubmitting(false);
       }
@@ -341,7 +341,7 @@ function PostDetailView({ postId }) {
   }, []);
 
   const handlePostDelete = useCallback(() => {
-    notify.success("Gönderi silindi.");
+    notify.success("Post deleted.");
     navigate("/");
   }, [navigate]);
 
@@ -379,13 +379,13 @@ function PostDetailView({ postId }) {
       <div className="flex items-center gap-2">
         <IconButton
           icon={ArrowLeft}
-          aria-label="Geri dön"
+          aria-label="Go back"
           variant="ghost"
           size="sm"
           onClick={handleBack}
         />
         <h1 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-          Gönderi
+          Post
         </h1>
       </div>
 
@@ -402,9 +402,9 @@ function PostDetailView({ postId }) {
       {showNotFound && !showInitialLoading && (
         <EmptyState
           icon={FileQuestion}
-          title="Gönderi bulunamadı"
-          description="Silinmiş ya da hiç var olmamış olabilir."
-          action={{ label: "Akışa dön", href: "/" }}
+          title="Post not found"
+          description="It may have been deleted or never existed."
+          action={{ label: "Back to feed", href: "/" }}
         />
       )}
 
@@ -422,11 +422,11 @@ function PostDetailView({ postId }) {
             <span className="tabular-nums font-medium text-zinc-700 dark:text-zinc-200">
               {compactCount(post.likesCount ?? 0)}
             </span>{" "}
-            beğeni ·{" "}
+            likes ·{" "}
             <span className="tabular-nums font-medium text-zinc-700 dark:text-zinc-200">
               {compactCount(post.commentsCount ?? 0)}
             </span>{" "}
-            yorum ·{" "}
+            comments ·{" "}
             <time
               dateTime={toIso(post.createdAt)}
               className="text-zinc-500 dark:text-zinc-400"
@@ -453,7 +453,7 @@ function PostDetailView({ postId }) {
 
                 <div className="min-w-0 flex-1">
                   <label htmlFor={`${formId}-comment`} className="sr-only">
-                    Yorum içeriği
+                    Comment content
                   </label>
                   <textarea
                     id={`${formId}-comment`}
@@ -461,7 +461,7 @@ function PostDetailView({ postId }) {
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
                     onKeyDown={onComposerKeyDown}
-                    placeholder="Bir yorum yaz…"
+                    placeholder="Write a comment…"
                     rows={1}
                     maxLength={MAX_COMMENT}
                     disabled={submitting}
@@ -486,7 +486,7 @@ function PostDetailView({ postId }) {
                       max={MAX_COMMENT}
                       live={announceCounter}
                     />
-                    <Tooltip content="Cmd/Ctrl + Enter ile gönder">
+                    <Tooltip content="Send with Cmd/Ctrl + Enter">
                       <Button
                         type="submit"
                         variant="primary"
@@ -494,7 +494,7 @@ function PostDetailView({ postId }) {
                         loading={submitting}
                         disabled={!canSubmitComment}
                       >
-                        {submitting ? "Gönderiliyor…" : "Yorum yap"}
+                        {submitting ? "Sending…" : "Comment"}
                       </Button>
                     </Tooltip>
                   </div>
@@ -505,10 +505,10 @@ function PostDetailView({ postId }) {
             <Card padding="md" className="text-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-zinc-700 dark:text-zinc-200">
-                  Sohbete katılmak için giriş yap.
+                  Sign in to join the conversation.
                 </p>
                 <Button as={Link} to="/login" variant="primary" size="sm">
-                  Giriş yap
+                  Sign in
                 </Button>
               </div>
             </Card>
@@ -526,8 +526,8 @@ function PostDetailView({ postId }) {
               >
                 <ArrowUp className="size-3.5" aria-hidden="true" />
                 {newCount === 1
-                  ? "1 yeni yorum"
-                  : `${newCount} yeni yorum`}
+                  ? "1 new comment"
+                  : `${newCount} new comments`}
               </button>
             </div>
           )}
@@ -541,7 +541,7 @@ function PostDetailView({ postId }) {
                   size="sm"
                   onClick={refreshFromTop}
                 >
-                  Tekrar dene
+                  Try again
                 </Button>
               </div>
             </Banner>
@@ -559,8 +559,8 @@ function PostDetailView({ postId }) {
 
           {!commentsLoading && comments.length === 0 && !commentsError && (
             <EmptyState
-              title="İlk yorumu sen yap"
-              description="Bu gönderi için henüz bir yorum yok."
+              title="Be the first to comment"
+              description="There are no comments on this post yet."
               className="py-8"
             />
           )}
@@ -584,7 +584,7 @@ function PostDetailView({ postId }) {
               {paginating && (
                 <div className="flex items-center justify-center gap-2 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                   <Spinner size="md" />
-                  <span>Daha fazla yorum yükleniyor…</span>
+                  <span>Loading more comments…</span>
                 </div>
               )}
             </div>
@@ -595,7 +595,7 @@ function PostDetailView({ postId }) {
             !hasMore &&
             !commentsError && (
               <p className="py-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                Tüm yorumları gördün.
+                You've seen all the comments.
               </p>
             )}
         </>

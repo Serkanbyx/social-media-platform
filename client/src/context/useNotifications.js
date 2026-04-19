@@ -10,13 +10,13 @@ import { createContext, useContext } from "react";
 export const NotificationContext = createContext(null);
 
 const TYPE_SENTENCE = {
-  like: "gönderini beğendi",
-  comment: "gönderine yorum yaptı",
-  follow: "seni takip etmeye başladı",
+  like: "liked your post",
+  comment: "commented on your post",
+  follow: "started following you",
 };
 
 export const sentenceFor = (type) =>
-  TYPE_SENTENCE[type] || "yeni bir bildirim gönderdi";
+  TYPE_SENTENCE[type] || "sent you a new notification";
 
 // Build the in-app deep link for a notification. Falls back to the
 // notifications page when the embedded post/sender is missing.

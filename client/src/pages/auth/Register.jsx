@@ -10,7 +10,7 @@ import Spinner from "../../components/ui/Spinner.jsx";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
-const FALLBACK_ERROR = "Kayıt oluşturulamadı. Lütfen tekrar dene.";
+const FALLBACK_ERROR = "Couldn't create your account. Please try again.";
 
 const sanitizeUsername = (raw) =>
   raw
@@ -35,7 +35,7 @@ const scorePassword = (pw) => {
   return score;
 };
 
-const STRENGTH_LABELS = ["Çok zayıf", "Zayıf", "Orta", "İyi", "Güçlü", "Çok güçlü"];
+const STRENGTH_LABELS = ["Very weak", "Weak", "Fair", "Good", "Strong", "Very strong"];
 const STRENGTH_COLORS = [
   "bg-zinc-200 dark:bg-zinc-800",
   "bg-rose-500",
@@ -66,7 +66,7 @@ function StrengthMeter({ score }) {
         className="mt-1 text-2xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
         aria-live="polite"
       >
-        Şifre gücü: {STRENGTH_LABELS[score] ?? STRENGTH_LABELS[0]}
+        Password strength: {STRENGTH_LABELS[score] ?? STRENGTH_LABELS[0]}
       </p>
     </div>
   );
@@ -78,27 +78,27 @@ const validateField = (field, value) => {
   switch (field) {
     case "name": {
       const trimmed = value.trim();
-      if (!trimmed) return "Görünen ad gerekli.";
-      if (trimmed.length > 60) return "Görünen ad en fazla 60 karakter olabilir.";
+      if (!trimmed) return "Display name is required.";
+      if (trimmed.length > 60) return "Display name can be at most 60 characters.";
       return "";
     }
     case "username": {
-      if (!value) return "Kullanıcı adı gerekli.";
+      if (!value) return "Username is required.";
       if (!USERNAME_REGEX.test(value))
-        return "3–20 karakter; küçük harf, rakam ve alt çizgi.";
+        return "3–20 characters; lowercase letters, digits and underscore.";
       return "";
     }
     case "email": {
-      if (!value.trim()) return "E-posta gerekli.";
+      if (!value.trim()) return "Email is required.";
       if (!EMAIL_REGEX.test(value.trim()))
-        return "Geçerli bir e-posta adresi gir.";
+        return "Enter a valid email address.";
       return "";
     }
     case "password": {
-      if (!value) return "Şifre gerekli.";
-      if (value.length < 8) return "Şifre en az 8 karakter olmalı.";
+      if (!value) return "Password is required.";
+      if (value.length < 8) return "Password must be at least 8 characters.";
       if (!/[A-Za-z]/.test(value) || !/\d/.test(value))
-        return "Şifre en az bir harf ve bir rakam içermeli.";
+        return "Password must include at least one letter and one digit.";
       return "";
     }
     default:
@@ -192,7 +192,7 @@ export default function Register() {
         email: form.email.trim(),
         password: form.password,
       });
-      toast.success(`Hoş geldin, ${user?.name || user?.username || "Pulse'a"}!`);
+      toast.success(`Welcome, ${user?.name || user?.username || "to Pulse"}!`);
       navigate("/", { replace: true });
     } catch (err) {
       handleServerError(err);
@@ -212,16 +212,16 @@ export default function Register() {
 
   return (
     <AuthShell
-      title="Hesap oluştur"
-      subtitle="Birkaç saniye içinde Pulse'a katıl."
+      title="Create your account"
+      subtitle="Join Pulse in just a few seconds."
       footer={
         <>
-          Zaten bir hesabın var mı?{" "}
+          Already have an account?{" "}
           <Link
             to="/login"
             className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
           >
-            Giriş yap
+            Sign in
           </Link>
         </>
       }
@@ -238,7 +238,7 @@ export default function Register() {
             htmlFor="reg-name"
             className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-200"
           >
-            Görünen ad
+            Display name
           </label>
           <input
             id="reg-name"
@@ -250,7 +250,7 @@ export default function Register() {
             value={form.name}
             onChange={(e) => setField("name", e.target.value)}
             onBlur={handleBlur("name")}
-            placeholder="Adın"
+            placeholder="Your name"
             aria-invalid={fieldErrors.name ? "true" : undefined}
             aria-describedby={
               fieldErrors.name ? "reg-name-error" : "reg-name-helper"
@@ -269,7 +269,7 @@ export default function Register() {
               id="reg-name-helper"
               className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400"
             >
-              Diğerleri seni böyle görecek.
+              This is how others will see you.
             </p>
           )}
         </div>
@@ -279,7 +279,7 @@ export default function Register() {
             htmlFor="reg-username"
             className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-200"
           >
-            Kullanıcı adı
+            Username
           </label>
           <div className="relative">
             <span
@@ -297,7 +297,7 @@ export default function Register() {
               value={form.username}
               onChange={(e) => setField("username", sanitizeUsername(e.target.value))}
               onBlur={handleBlur("username")}
-              placeholder="kullaniciadi"
+              placeholder="username"
               aria-invalid={fieldErrors.username ? "true" : undefined}
               aria-describedby={
                 fieldErrors.username
@@ -319,7 +319,7 @@ export default function Register() {
               id="reg-username-helper"
               className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400"
             >
-              Küçük harf, rakam ve alt çizgi. 3–20 karakter.
+              Lowercase letters, digits and underscore. 3–20 characters.
             </p>
           )}
         </div>
@@ -329,7 +329,7 @@ export default function Register() {
             htmlFor="reg-email"
             className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-200"
           >
-            E-posta
+            Email
           </label>
           <input
             id="reg-email"
@@ -340,7 +340,7 @@ export default function Register() {
             value={form.email}
             onChange={(e) => setField("email", e.target.value)}
             onBlur={handleBlur("email")}
-            placeholder="ornek@eposta.com"
+            placeholder="you@example.com"
             aria-invalid={fieldErrors.email ? "true" : undefined}
             aria-describedby={fieldErrors.email ? "reg-email-error" : undefined}
             className={`${inputClass(Boolean(fieldErrors.email))} px-3`}
@@ -359,15 +359,15 @@ export default function Register() {
           <PasswordInput
             id="reg-password"
             name="password"
-            label="Şifre"
+            label="Password"
             autoComplete="new-password"
             required
             value={form.password}
             onChange={(e) => setField("password", e.target.value)}
             onBlur={handleBlur("password")}
-            placeholder="En az 8 karakter"
+            placeholder="At least 8 characters"
             errorText={fieldErrors.password || undefined}
-            helperText="En az 8 karakter, harf ve rakam içermeli."
+            helperText="At least 8 characters, including a letter and a digit."
           />
           <StrengthMeter score={passwordScore} />
         </div>
@@ -380,10 +380,10 @@ export default function Register() {
           {submitting ? (
             <>
               <Spinner size="sm" className="!text-white" />
-              <span>Hesap oluşturuluyor…</span>
+              <span>Creating account…</span>
             </>
           ) : (
-            "Hesap oluştur"
+            "Create account"
           )}
         </button>
       </form>

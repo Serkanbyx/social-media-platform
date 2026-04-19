@@ -64,9 +64,9 @@ const DRAFT_KEY = "draft:post";
 const DRAFT_INITIAL = { content: "" };
 
 const PLACEHOLDERS = [
-  "Bir şeyler paylaş…",
-  "Neler oluyor?",
-  "Aklından ne geçiyor?",
+  "Share something…",
+  "What's happening?",
+  "What's on your mind?",
 ];
 
 const QUICK_EMOJIS = [
@@ -161,13 +161,13 @@ export default function CreatePostForm({
   }, []);
 
   const validateFile = useCallback((candidate) => {
-    if (!candidate) return "Geçersiz dosya.";
+    if (!candidate) return "Invalid file.";
     if (!ALLOWED_IMAGE_TYPES.includes(candidate.type)) {
-      return "Yalnızca JPG, PNG, WEBP veya GIF formatları desteklenir.";
+      return "Only JPG, PNG, WEBP or GIF formats are supported.";
     }
     const maxBytes = MAX_POST_IMAGE_MB * 1024 * 1024;
     if (candidate.size > maxBytes) {
-      return `Görsel çok büyük (en fazla ${MAX_POST_IMAGE_MB} MB).`;
+      return `Image is too large (max ${MAX_POST_IMAGE_MB} MB).`;
     }
     return "";
   }, []);
@@ -289,7 +289,7 @@ export default function CreatePostForm({
         resetComposer();
         if (!isStandalone) setExpanded(false);
 
-        notify.success("Gönderi paylaşıldı.");
+        notify.success("Post shared.");
         onCreated?.(created);
 
         if (isStandalone) navigate("/");
@@ -304,10 +304,10 @@ export default function CreatePostForm({
           );
         } else {
           setServerError(
-            error?.response?.data?.message || "Gönderi paylaşılamadı."
+            error?.response?.data?.message || "Couldn't share the post."
           );
         }
-        notify.error("Gönderi paylaşılamadı.");
+        notify.error("Couldn't share the post.");
       } finally {
         setSubmitting(false);
       }
@@ -369,7 +369,7 @@ export default function CreatePostForm({
       onChange={onFileChange}
       className="hidden"
       tabIndex={-1}
-      aria-label="Görsel ekle"
+      aria-label="Add image"
     />
   );
 
@@ -394,12 +394,12 @@ export default function CreatePostForm({
           onClick={() => setExpanded(true)}
           className="flex-1 cursor-text rounded-full bg-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 transition-colors duration-fast hover:bg-zinc-200/70 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700/70"
         >
-          {`${firstName}, aklından ne geçiyor?`}
+          {`${firstName}, what's on your mind?`}
         </button>
-        <Tooltip content="Görsel ekle">
+        <Tooltip content="Add image">
           <IconButton
             icon={ImageIcon}
-            aria-label="Görsel ekle"
+            aria-label="Add image"
             variant="ghost"
             size="sm"
             onClick={() => {
@@ -435,7 +435,7 @@ export default function CreatePostForm({
             className="mb-3"
             onDismiss={() => setShowRestored(false)}
           >
-            Önceki taslağın geri yüklendi.
+            Restored your previous draft.
           </Banner>
         )}
 
@@ -449,7 +449,7 @@ export default function CreatePostForm({
 
           <div className="min-w-0 flex-1">
             <label htmlFor={`${formId}-content`} className="sr-only">
-              Gönderi içeriği
+              Post content
             </label>
             <textarea
               id={`${formId}-content`}
@@ -471,7 +471,7 @@ export default function CreatePostForm({
                 <div className="relative aspect-[4/5] w-full max-w-sm overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">
                   <img
                     src={previewUrl}
-                    alt="Eklenen görsel önizlemesi"
+                    alt="Attached image preview"
                     className={cn(
                       "size-full object-cover transition-opacity duration-base",
                       submitting ? "opacity-60" : "opacity-100"
@@ -487,7 +487,7 @@ export default function CreatePostForm({
                         aria-valuemin={0}
                         aria-valuemax={100}
                         aria-valuenow={uploadProgress}
-                        aria-label="Yükleme ilerlemesi"
+                        aria-label="Upload progress"
                         className="absolute bottom-0 left-0 right-0 h-1.5 overflow-hidden bg-black/30"
                       >
                         <div
@@ -502,7 +502,7 @@ export default function CreatePostForm({
                   <button
                     type="button"
                     onClick={onRemoveAttachment}
-                    aria-label="Görseli kaldır"
+                    aria-label="Remove image"
                     className="absolute right-2 top-2 inline-flex size-8 items-center justify-center rounded-full bg-zinc-900/70 text-white backdrop-blur-sm transition-colors duration-fast hover:bg-zinc-900/85"
                   >
                     <X className="size-4" aria-hidden="true" />
@@ -531,10 +531,10 @@ export default function CreatePostForm({
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1">
-                <Tooltip content="Görsel ekle">
+                <Tooltip content="Add image">
                   <IconButton
                     icon={ImageIcon}
-                    aria-label="Görsel ekle"
+                    aria-label="Add image"
                     variant="brand"
                     size="sm"
                     onClick={onPickClick}
@@ -548,7 +548,7 @@ export default function CreatePostForm({
                   trigger={
                     <IconButton
                       icon={Smile}
-                      aria-label="Emoji ekle"
+                      aria-label="Add emoji"
                       variant="ghost"
                       size="sm"
                       disabled={submitting}
@@ -565,7 +565,7 @@ export default function CreatePostForm({
                             insertEmoji(emoji);
                             close();
                           }}
-                          aria-label={`Emoji ${emoji} ekle`}
+                          aria-label={`Insert emoji ${emoji}`}
                           className="flex size-8 items-center justify-center rounded-md text-lg transition-colors duration-fast hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         >
                           {emoji}
@@ -575,11 +575,11 @@ export default function CreatePostForm({
                   )}
                 </Popover>
 
-                <Tooltip content="Yakında eklenecek">
+                <Tooltip content="Coming soon">
                   <span className="inline-flex">
                     <IconButton
                       icon={BarChart3}
-                      aria-label="Anket oluştur (yakında)"
+                      aria-label="Create poll (coming soon)"
                       variant="ghost"
                       size="sm"
                       disabled
@@ -603,11 +603,11 @@ export default function CreatePostForm({
                     onClick={requestCancel}
                     disabled={submitting}
                   >
-                    Vazgeç
+                    Cancel
                   </Button>
                 )}
 
-                <Tooltip content="Cmd/Ctrl + Enter ile paylaş">
+                <Tooltip content="Share with Cmd/Ctrl + Enter">
                   <Button
                     type="submit"
                     variant="primary"
@@ -617,10 +617,10 @@ export default function CreatePostForm({
                     leftIcon={success ? Check : undefined}
                   >
                     {success
-                      ? "Paylaşıldı"
+                      ? "Shared"
                       : submitting
-                        ? "Paylaşılıyor…"
-                        : "Paylaş"}
+                        ? "Sharing…"
+                        : "Share"}
                   </Button>
                 </Tooltip>
               </div>
@@ -635,7 +635,7 @@ export default function CreatePostForm({
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-brand-500 bg-brand-50/85 backdrop-blur-sm motion-safe:animate-fade-up dark:bg-brand-950/50"
           >
             <p className="text-base font-semibold text-brand-700 dark:text-brand-200">
-              Eklemek için bırak
+              Drop to attach
             </p>
           </div>
         )}
@@ -645,10 +645,10 @@ export default function CreatePostForm({
 
       <ConfirmModal
         open={discardOpen}
-        title="Taslağı sil"
-        description="Henüz paylaşmadığın içerik silinecek. Devam etmek istiyor musun?"
-        confirmLabel="Sil"
-        cancelLabel="Vazgeç"
+        title="Discard draft"
+        description="Your unshared content will be deleted. Do you want to continue?"
+        confirmLabel="Discard"
+        cancelLabel="Cancel"
         danger
         onConfirm={finalizeCancel}
         onCancel={() => setDiscardOpen(false)}

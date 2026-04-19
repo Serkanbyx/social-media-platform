@@ -160,7 +160,7 @@ export default function Modal({
               <IconButton
                 icon={X}
                 size="sm"
-                aria-label="Kapat"
+                aria-label="Close"
                 onClick={handleClose}
                 className="-mr-1"
               />

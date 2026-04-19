@@ -24,25 +24,25 @@ import useDocumentTitle from "../../hooks/useDocumentTitle.js";
 const IN_APP_TOGGLES = [
   {
     key: "notifications.likes",
-    label: "Gönderilerine gelen beğeniler",
-    description: "Birisi gönderini beğendiğinde bildirim al.",
+    label: "Likes on your posts",
+    description: "Get notified when someone likes your post.",
   },
   {
     key: "notifications.comments",
-    label: "Gönderilerine gelen yorumlar",
-    description: "Birisi gönderine yorum yaptığında bildirim al.",
+    label: "Comments on your posts",
+    description: "Get notified when someone comments on your post.",
   },
   {
     key: "notifications.follows",
-    label: "Yeni takipçiler",
-    description: "Birisi seni takip etmeye başladığında bildirim al.",
+    label: "New followers",
+    description: "Get notified when someone starts following you.",
   },
 ];
 
 const fieldOf = (key) => key.split(".").pop();
 
 export default function NotificationSettings() {
-  useDocumentTitle("Bildirimler · Ayarlar");
+  useDocumentTitle("Notifications · Settings");
 
   const { preferences } = usePreferences();
   const { save, savedKey } = usePreferenceAutoSave();
@@ -55,26 +55,26 @@ export default function NotificationSettings() {
   return (
     <div className="space-y-6">
       <SettingsSection
-        title="E-posta bildirimleri"
-        description="Önemli etkinlikler için e-posta gönderelim mi?"
+        title="Email notifications"
+        description="Should we email you about important events?"
         action={
           <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-2xs font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
             <Lock className="size-3" aria-hidden="true" />
-            Yakında
+            Coming soon
           </span>
         }
       >
         <ToggleSwitch
           checked={false}
           disabled
-          label="E-posta bildirimleri"
-          description="Bu özellik henüz aktif değil. Hazır olduğunda burada açabileceksin."
+          label="Email notifications"
+          description="This feature isn't enabled yet. You'll be able to turn it on here once it's ready."
         />
       </SettingsSection>
 
       <SettingsSection
-        title="Uygulama içi bildirimler"
-        description="Pulse içinde hangi etkinlikler için bildirim almak istediğini seç."
+        title="In-app notifications"
+        description="Pick which in-app events you want to be notified about on Pulse."
       >
         <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
           {IN_APP_TOGGLES.map(({ key, label, description }) => {

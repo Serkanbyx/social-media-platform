@@ -50,25 +50,21 @@ import notify from "../../utils/notify.js";
  * roll back if the server rejects. Delete pops a confirm modal first
  * (the cascade hook removes related comments/notifications/the
  * Cloudinary asset, and that's irreversible).
- *
- * The whole row links to the public post page in a new tab so the
- * moderator can read the full content without losing their filter
- * context in the table.
  */
 
 const SEARCH_DEBOUNCE_MS = 350;
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "Tüm gönderiler" },
-  { value: "false", label: "Görünür" },
-  { value: "true", label: "Gizli" },
+  { value: "all", label: "All posts" },
+  { value: "false", label: "Visible" },
+  { value: "true", label: "Hidden" },
 ];
 
 const ROW_COLUMNS = 7;
 const PREVIEW_LENGTH = 80;
 
 export default function AdminPosts() {
-  useDocumentTitle("Yönetim · Gönderiler");
+  useDocumentTitle("Admin · Posts");
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -109,7 +105,7 @@ export default function AdminPosts() {
       setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
     } catch {
       if (requestIdRef.current !== requestId) return;
-      setError("Gönderiler yüklenemedi.");
+      setError("Couldn't load posts.");
       setItems([]);
       setTotal(0);
       setTotalPages(1);
@@ -126,7 +122,6 @@ export default function AdminPosts() {
     setPage(1);
   }, [debouncedSearch, status]);
 
-  // ---------- Mutations ----------
   const updateLocalPost = useCallback((id, patch) => {
     setItems((prev) =>
       prev.map((row) =>
@@ -143,11 +138,11 @@ export default function AdminPosts() {
       updateLocalPost(target._id, { isHidden: next });
       try {
         await adminService.hidePost(target._id);
-        notify.success(next ? "Gönderi gizlendi." : "Gönderi yeniden görünür.");
+        notify.success(next ? "Post hidden." : "Post is visible again.");
       } catch (err) {
         updateLocalPost(target._id, { isHidden: previous });
         const message =
-          err?.response?.data?.message || "Gönderi durumu değiştirilemedi.";
+          err?.response?.data?.message || "Couldn't change post status.";
         notify.error(message);
       }
     },
@@ -163,10 +158,10 @@ export default function AdminPosts() {
       await adminService.deletePost(pendingDelete._id);
       setItems((prev) => prev.filter((row) => row._id !== pendingDelete._id));
       setTotal((prev) => Math.max(0, prev - 1));
-      notify.success("Gönderi silindi.");
+      notify.success("Post deleted.");
       closeDelete();
     } catch (err) {
-      const message = err?.response?.data?.message || "Gönderi silinemedi.";
+      const message = err?.response?.data?.message || "Couldn't delete post.";
       notify.error(message);
       closeDelete();
     }
@@ -177,14 +172,14 @@ export default function AdminPosts() {
       <AdminFiltersBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Gönderi içeriğinde ara"
-        searchAriaLabel="Gönderi içeriğinde ara"
+        searchPlaceholder="Search post content"
+        searchAriaLabel="Search post content"
         searchPending={search.trim() !== debouncedSearch}
         hasActiveFilters={hasActiveFilters}
         onReset={handleResetFilters}
         extras={
           <AdminSelect
-            label="Durum"
+            label="Status"
             inline
             value={status}
             onChange={setStatus}
@@ -197,7 +192,7 @@ export default function AdminPosts() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           <span>{error}</span>
           <Button variant="secondary" size="sm" onClick={fetchPosts}>
-            Tekrar dene
+            Try again
           </Button>
         </div>
       ) : (
@@ -207,13 +202,13 @@ export default function AdminPosts() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 z-10 bg-zinc-50/80 backdrop-blur dark:bg-zinc-900/80">
                 <tr className="text-left text-2xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  <th className="px-4 py-3">Gönderi</th>
-                  <th className="px-4 py-3">Yazar</th>
-                  <th className="px-4 py-3">Tarih</th>
-                  <th className="px-4 py-3 text-right">Beğeni</th>
-                  <th className="px-4 py-3 text-right">Yorum</th>
-                  <th className="px-4 py-3">Durum</th>
-                  <th className="px-4 py-3 text-right">İşlem</th>
+                  <th className="px-4 py-3">Post</th>
+                  <th className="px-4 py-3">Author</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">Likes</th>
+                  <th className="px-4 py-3 text-right">Comments</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,18 +226,18 @@ export default function AdminPosts() {
                         icon={Newspaper}
                         title={
                           hasActiveFilters
-                            ? "Bu filtrelerle eşleşen gönderi yok"
-                            : "Gönderi bulunamadı"
+                            ? "No posts match these filters"
+                            : "No posts found"
                         }
                         description={
                           hasActiveFilters
-                            ? "Aramayı değiştir veya filtreleri sıfırla."
-                            : "Henüz hiç gönderi paylaşılmamış."
+                            ? "Adjust your search or reset the filters."
+                            : "No posts have been shared yet."
                         }
                         action={
                           hasActiveFilters
                             ? {
-                                label: "Filtreleri sıfırla",
+                                label: "Reset filters",
                                 onClick: handleResetFilters,
                               }
                             : undefined
@@ -282,18 +277,18 @@ export default function AdminPosts() {
                 icon={Newspaper}
                 title={
                   hasActiveFilters
-                    ? "Bu filtrelerle eşleşen gönderi yok"
-                    : "Gönderi bulunamadı"
+                    ? "No posts match these filters"
+                    : "No posts found"
                 }
                 description={
                   hasActiveFilters
-                    ? "Aramayı değiştir veya filtreleri sıfırla."
-                    : "Henüz hiç gönderi paylaşılmamış."
+                    ? "Adjust your search or reset the filters."
+                    : "No posts have been shared yet."
                 }
                 action={
                   hasActiveFilters
                     ? {
-                        label: "Filtreleri sıfırla",
+                        label: "Reset filters",
                         onClick: handleResetFilters,
                       }
                     : undefined
@@ -325,11 +320,11 @@ export default function AdminPosts() {
 
       <ConfirmModal
         open={Boolean(pendingDelete)}
-        title="Gönderiyi sil"
-        description="Bu gönderiyi kalıcı olarak silmek üzeresin. Tüm yorumları, beğenileri ve bağlı bildirimleri de kaldırılacak. Bu işlem geri alınamaz."
-        confirmLabel="Kalıcı olarak sil"
-        cancelLabel="Vazgeç"
-        busyLabel="Siliniyor…"
+        title="Delete post"
+        description="You're about to permanently delete this post. All of its comments, likes and related notifications will also be removed. This action cannot be undone."
+        confirmLabel="Delete permanently"
+        cancelLabel="Cancel"
+        busyLabel="Deleting…"
         danger
         onConfirm={handleConfirmDelete}
         onCancel={closeDelete}
@@ -368,25 +363,25 @@ function PostRow({ row, onToggleHidden, onDelete }) {
   const author = row.author || {};
   const preview = row.content
     ? truncate(row.content, PREVIEW_LENGTH)
-    : "(boş gönderi)";
+    : "(empty post)";
 
   const items = [
     {
       key: "view",
-      label: "Yeni sekmede aç",
+      label: "Open in new tab",
       icon: ExternalLink,
       onClick: () => window.open(`/posts/${row._id}`, "_blank"),
     },
     {
       key: "toggle",
-      label: row.isHidden ? "Gönderiyi göster" : "Gönderiyi gizle",
+      label: row.isHidden ? "Show post" : "Hide post",
       icon: row.isHidden ? Eye : EyeOff,
       onClick: () => onToggleHidden(row),
     },
     { divider: true },
     {
       key: "delete",
-      label: "Gönderiyi sil",
+      label: "Delete post",
       icon: Trash2,
       danger: true,
       onClick: () => onDelete(row),
@@ -432,7 +427,7 @@ function PostRow({ row, onToggleHidden, onDelete }) {
             to={`/u/${author.username || ""}`}
             className="truncate text-zinc-700 hover:underline dark:text-zinc-300"
           >
-            @{author.username || "silinmiş"}
+            @{author.username || "deleted"}
           </Link>
         </div>
       </td>
@@ -451,11 +446,11 @@ function PostRow({ row, onToggleHidden, onDelete }) {
         {row.isHidden ? (
           <Badge variant="warning" size="sm">
             <EyeOff className="mr-1 size-3" aria-hidden="true" />
-            Gizli
+            Hidden
           </Badge>
         ) : (
           <Badge variant="success" size="sm">
-            Görünür
+            Visible
           </Badge>
         )}
       </td>
@@ -468,7 +463,7 @@ function PostRow({ row, onToggleHidden, onDelete }) {
               icon={MoreHorizontal}
               variant="ghost"
               size="sm"
-              aria-label="Gönderi işlemleri"
+              aria-label="Post actions"
             />
           }
           items={items}
@@ -482,7 +477,7 @@ function PostCardRow({ row, onToggleHidden, onDelete }) {
   const author = row.author || {};
   const preview = row.content
     ? truncate(row.content, 140)
-    : "(boş gönderi)";
+    : "(empty post)";
 
   return (
     <li
@@ -515,7 +510,7 @@ function PostCardRow({ row, onToggleHidden, onDelete }) {
                 username={author.username}
                 size="xs"
               />
-              @{author.username || "silinmiş"}
+              @{author.username || "deleted"}
             </span>
             <span aria-hidden="true">·</span>
             <span className="tnum">{formatRelative(row.createdAt)}</span>
@@ -530,7 +525,7 @@ function PostCardRow({ row, onToggleHidden, onDelete }) {
             </span>
             {row.isHidden && (
               <Badge variant="warning" size="sm">
-                Gizli
+                Hidden
               </Badge>
             )}
           </div>
@@ -543,26 +538,26 @@ function PostCardRow({ row, onToggleHidden, onDelete }) {
               icon={MoreHorizontal}
               variant="ghost"
               size="sm"
-              aria-label="Gönderi işlemleri"
+              aria-label="Post actions"
             />
           }
           items={[
             {
               key: "view",
-              label: "Yeni sekmede aç",
+              label: "Open in new tab",
               icon: ExternalLink,
               onClick: () => window.open(`/posts/${row._id}`, "_blank"),
             },
             {
               key: "toggle",
-              label: row.isHidden ? "Gönderiyi göster" : "Gönderiyi gizle",
+              label: row.isHidden ? "Show post" : "Hide post",
               icon: row.isHidden ? Eye : EyeOff,
               onClick: () => onToggleHidden(row),
             },
             { divider: true },
             {
               key: "delete",
-              label: "Gönderiyi sil",
+              label: "Delete post",
               icon: Trash2,
               danger: true,
               onClick: () => onDelete(row),

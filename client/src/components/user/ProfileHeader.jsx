@@ -37,7 +37,7 @@ const monthYear = (input) => {
   const date = input instanceof Date ? input : new Date(input);
   if (Number.isNaN(date.getTime())) return "";
   // `Intl` keeps locale-aware month names without dragging extra deps.
-  return new Intl.DateTimeFormat("tr-TR", {
+  return new Intl.DateTimeFormat("en", {
     month: "long",
     year: "numeric",
   }).format(date);
@@ -156,7 +156,7 @@ function ProfileHeader({
                   size="sm"
                   leftIcon={Pencil}
                 >
-                  Profili düzenle
+                  Edit profile
                 </Button>
               ) : (
                 <FollowButton
@@ -179,7 +179,7 @@ function ProfileHeader({
             {isAdmin && (
               <Badge variant="brand" size="sm" className="gap-1">
                 <ShieldCheck className="size-3" aria-hidden="true" />
-                Yönetici
+                Admin
               </Badge>
             )}
           </div>
@@ -193,7 +193,7 @@ function ProfileHeader({
                 </span>
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
                   <Lock className="size-3" aria-hidden="true" />
-                  Gizli hesap
+                  Private account
                 </span>
               </>
             )}
@@ -208,7 +208,7 @@ function ProfileHeader({
           {joined && (
             <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
               <Calendar className="size-3.5" aria-hidden="true" />
-              <span>{joined} tarihinde katıldı</span>
+              <span>Joined {joined}</span>
             </p>
           )}
         </div>
@@ -218,7 +218,7 @@ function ProfileHeader({
             <span className="font-semibold text-zinc-900 tnum dark:text-zinc-50">
               {postsCount}
             </span>
-            <span className="text-zinc-500 dark:text-zinc-400">Gönderi</span>
+            <span className="text-zinc-500 dark:text-zinc-400">Posts</span>
           </li>
           <li>
             <Link
@@ -228,7 +228,7 @@ function ProfileHeader({
               <span className="font-semibold text-zinc-900 tnum dark:text-zinc-50">
                 {followersCount}
               </span>
-              <span className="text-zinc-500 dark:text-zinc-400">Takipçi</span>
+              <span className="text-zinc-500 dark:text-zinc-400">Followers</span>
             </Link>
           </li>
           <li>
@@ -239,7 +239,7 @@ function ProfileHeader({
               <span className="font-semibold text-zinc-900 tnum dark:text-zinc-50">
                 {followingCount}
               </span>
-              <span className="text-zinc-500 dark:text-zinc-400">Takip</span>
+              <span className="text-zinc-500 dark:text-zinc-400">Following</span>
             </Link>
           </li>
         </ul>

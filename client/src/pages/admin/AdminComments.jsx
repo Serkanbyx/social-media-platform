@@ -50,7 +50,7 @@ const ROW_COLUMNS = 5;
 const PREVIEW_LENGTH = 110;
 
 export default function AdminComments() {
-  useDocumentTitle("Yönetim · Yorumlar");
+  useDocumentTitle("Admin · Comments");
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
@@ -66,10 +66,6 @@ export default function AdminComments() {
   const [error, setError] = useState("");
   const [retryNonce, setRetryNonce] = useState(0);
 
-  // Loading is derived from a request-key vs last-completed-key comparison
-  // instead of being set synchronously inside the effect — this avoids the
-  // "setState in effect body" anti-pattern (cascading renders) and makes
-  // request cancellation race-free via a simple `ignore` flag.
   const requestKey = `${debouncedSearch}|${page}|${retryNonce}`;
   const [completedKey, setCompletedKey] = useState(null);
   const loading = completedKey !== requestKey;
@@ -95,7 +91,7 @@ export default function AdminComments() {
       })
       .catch(() => {
         if (ignore) return;
-        setError("Yorumlar yüklenemedi.");
+        setError("Couldn't load comments.");
         setItems([]);
         setTotal(0);
         setTotalPages(1);
@@ -107,9 +103,6 @@ export default function AdminComments() {
     };
   }, [requestKey, debouncedSearch, page]);
 
-  // Reset pagination when the search term changes. Done during render via
-  // the "store-previous-value" pattern (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
-  // so we don't trigger an extra commit/effect cycle.
   const [lastSearchForPage, setLastSearchForPage] = useState(debouncedSearch);
   if (lastSearchForPage !== debouncedSearch) {
     setLastSearchForPage(debouncedSearch);
@@ -125,10 +118,10 @@ export default function AdminComments() {
       await adminService.deleteComment(pendingDelete._id);
       setItems((prev) => prev.filter((row) => row._id !== pendingDelete._id));
       setTotal((prev) => Math.max(0, prev - 1));
-      notify.success("Yorum silindi.");
+      notify.success("Comment deleted.");
       closeDelete();
     } catch (err) {
-      const message = err?.response?.data?.message || "Yorum silinemedi.";
+      const message = err?.response?.data?.message || "Couldn't delete comment.";
       notify.error(message);
       closeDelete();
     }
@@ -139,8 +132,8 @@ export default function AdminComments() {
       <AdminFiltersBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Yorum içeriğinde ara"
-        searchAriaLabel="Yorum içeriğinde ara"
+        searchPlaceholder="Search comment content"
+        searchAriaLabel="Search comment content"
         searchPending={search.trim() !== debouncedSearch}
         hasActiveFilters={hasActiveFilters}
         onReset={handleResetFilters}
@@ -150,7 +143,7 @@ export default function AdminComments() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           <span>{error}</span>
           <Button variant="secondary" size="sm" onClick={handleRetry}>
-            Tekrar dene
+            Try again
           </Button>
         </div>
       ) : (
@@ -160,11 +153,11 @@ export default function AdminComments() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 z-10 bg-zinc-50/80 backdrop-blur dark:bg-zinc-900/80">
                 <tr className="text-left text-2xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  <th className="px-4 py-3">Yorum</th>
-                  <th className="px-4 py-3">Yazar</th>
-                  <th className="px-4 py-3">Gönderi</th>
-                  <th className="px-4 py-3">Tarih</th>
-                  <th className="px-4 py-3 text-right">İşlem</th>
+                  <th className="px-4 py-3">Comment</th>
+                  <th className="px-4 py-3">Author</th>
+                  <th className="px-4 py-3">Post</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,18 +175,18 @@ export default function AdminComments() {
                         icon={MessageSquare}
                         title={
                           hasActiveFilters
-                            ? "Bu aramayla eşleşen yorum yok"
-                            : "Yorum bulunamadı"
+                            ? "No comments match this search"
+                            : "No comments found"
                         }
                         description={
                           hasActiveFilters
-                            ? "Farklı bir kelimeyle aramayı dene veya filtreleri sıfırla."
-                            : "Henüz hiç yorum yapılmamış."
+                            ? "Try a different keyword or reset the filters."
+                            : "No comments have been posted yet."
                         }
                         action={
                           hasActiveFilters
                             ? {
-                                label: "Filtreleri sıfırla",
+                                label: "Reset filters",
                                 onClick: handleResetFilters,
                               }
                             : undefined
@@ -232,18 +225,18 @@ export default function AdminComments() {
                 icon={MessageSquare}
                 title={
                   hasActiveFilters
-                    ? "Bu aramayla eşleşen yorum yok"
-                    : "Yorum bulunamadı"
+                    ? "No comments match this search"
+                    : "No comments found"
                 }
                 description={
                   hasActiveFilters
-                    ? "Farklı bir kelimeyle aramayı dene veya filtreleri sıfırla."
-                    : "Henüz hiç yorum yapılmamış."
+                    ? "Try a different keyword or reset the filters."
+                    : "No comments have been posted yet."
                 }
                 action={
                   hasActiveFilters
                     ? {
-                        label: "Filtreleri sıfırla",
+                        label: "Reset filters",
                         onClick: handleResetFilters,
                       }
                     : undefined
@@ -274,11 +267,11 @@ export default function AdminComments() {
 
       <ConfirmModal
         open={Boolean(pendingDelete)}
-        title="Yorumu sil"
-        description="Bu yorumu kalıcı olarak silmek üzeresin. Bu işlem geri alınamaz."
-        confirmLabel="Kalıcı olarak sil"
-        cancelLabel="Vazgeç"
-        busyLabel="Siliniyor…"
+        title="Delete comment"
+        description="You're about to permanently delete this comment. This action cannot be undone."
+        confirmLabel="Delete permanently"
+        cancelLabel="Cancel"
+        busyLabel="Deleting…"
         danger
         onConfirm={handleConfirmDelete}
         onCancel={closeDelete}
@@ -296,12 +289,12 @@ function CommentRow({ row, onDelete }) {
   const post = row.post || null;
   const excerpt = row.content
     ? truncate(row.content, PREVIEW_LENGTH)
-    : "(boş yorum)";
+    : "(empty comment)";
 
   const items = [
     {
       key: "view",
-      label: "Gönderiyi yeni sekmede aç",
+      label: "Open post in new tab",
       icon: ExternalLink,
       disabled: !post,
       onClick: () => post && window.open(`/posts/${post._id}`, "_blank"),
@@ -309,7 +302,7 @@ function CommentRow({ row, onDelete }) {
     { divider: true },
     {
       key: "delete",
-      label: "Yorumu sil",
+      label: "Delete comment",
       icon: Trash2,
       danger: true,
       onClick: () => onDelete(row),
@@ -335,7 +328,7 @@ function CommentRow({ row, onDelete }) {
             to={`/u/${author.username || ""}`}
             className="truncate text-zinc-700 hover:underline dark:text-zinc-300"
           >
-            @{author.username || "silinmiş"}
+            @{author.username || "deleted"}
           </Link>
         </div>
       </td>
@@ -350,15 +343,15 @@ function CommentRow({ row, onDelete }) {
               post.isHidden && "italic text-zinc-500 dark:text-zinc-400"
             )}
           >
-            {truncate(post.content || "(boş gönderi)", 50)}
+            {truncate(post.content || "(empty post)", 50)}
           </Link>
         ) : (
-          <span className="text-xs text-zinc-400">Silinmiş gönderi</span>
+          <span className="text-xs text-zinc-400">Deleted post</span>
         )}
         {post?.isHidden && (
           <Badge variant="warning" size="sm" className="mt-1">
             <EyeOff className="mr-1 size-3" aria-hidden="true" />
-            Gizli
+            Hidden
           </Badge>
         )}
       </td>
@@ -376,7 +369,7 @@ function CommentRow({ row, onDelete }) {
               icon={MoreHorizontal}
               variant="ghost"
               size="sm"
-              aria-label="Yorum işlemleri"
+              aria-label="Comment actions"
             />
           }
           items={items}
@@ -391,7 +384,7 @@ function CommentCardRow({ row, onDelete }) {
   const post = row.post || null;
   const excerpt = row.content
     ? truncate(row.content, PREVIEW_LENGTH)
-    : "(boş yorum)";
+    : "(empty comment)";
 
   return (
     <li className="px-4 py-4">
@@ -408,7 +401,7 @@ function CommentCardRow({ row, onDelete }) {
                 username={author.username}
                 size="xs"
               />
-              @{author.username || "silinmiş"}
+              @{author.username || "deleted"}
             </span>
             <span aria-hidden="true">·</span>
             <span className="tnum">{formatRelative(row.createdAt)}</span>
@@ -420,7 +413,7 @@ function CommentCardRow({ row, onDelete }) {
               rel="noopener noreferrer"
               className="block truncate text-xs text-brand-600 hover:underline dark:text-brand-400"
             >
-              ↳ {truncate(post.content || "(boş gönderi)", 60)}
+              ↳ {truncate(post.content || "(empty post)", 60)}
             </Link>
           )}
         </div>
@@ -432,13 +425,13 @@ function CommentCardRow({ row, onDelete }) {
               icon={MoreHorizontal}
               variant="ghost"
               size="sm"
-              aria-label="Yorum işlemleri"
+              aria-label="Comment actions"
             />
           }
           items={[
             {
               key: "view",
-              label: "Gönderiyi yeni sekmede aç",
+              label: "Open post in new tab",
               icon: ExternalLink,
               disabled: !post,
               onClick: () => post && window.open(`/posts/${post._id}`, "_blank"),
@@ -446,7 +439,7 @@ function CommentCardRow({ row, onDelete }) {
             { divider: true },
             {
               key: "delete",
-              label: "Yorumu sil",
+              label: "Delete comment",
               icon: Trash2,
               danger: true,
               onClick: () => onDelete(row),

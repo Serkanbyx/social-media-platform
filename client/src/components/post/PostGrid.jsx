@@ -138,7 +138,7 @@ function PostGridCell({ post }) {
   const username = post.author?.username || "user";
   const altText = post.content
     ? truncate(post.content, 80)
-    : `@${username} kullanıcısının gönderisi`;
+    : `Post by @${username}`;
 
   if (post.image?.url) {
     return <ImageCell post={post} href={href} altText={altText} />;

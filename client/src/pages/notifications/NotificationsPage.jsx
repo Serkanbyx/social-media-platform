@@ -46,16 +46,16 @@ const groupKeyFor = (input) => {
 };
 
 const GROUP_LABELS = {
-  today: "Bugün",
-  yesterday: "Dün",
-  thisWeek: "Bu hafta",
-  earlier: "Daha eski",
+  today: "Today",
+  yesterday: "Yesterday",
+  thisWeek: "This week",
+  earlier: "Earlier",
 };
 
 const GROUP_ORDER = ["today", "yesterday", "thisWeek", "earlier"];
 
 export default function NotificationsPage() {
-  useDocumentTitle("Bildirimler");
+  useDocumentTitle("Notifications");
 
   const {
     items,
@@ -118,7 +118,7 @@ export default function NotificationsPage() {
     try {
       await markAllRead();
     } catch {
-      notify.error("Bildirimler güncellenemedi.");
+      notify.error("Couldn't update notifications.");
     }
   };
 
@@ -129,7 +129,7 @@ export default function NotificationsPage() {
     <section className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6">
       <header className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Bildirimler
+          Notifications
         </h1>
         <Button
           variant="secondary"
@@ -137,7 +137,7 @@ export default function NotificationsPage() {
           onClick={handleMarkAll}
           disabled={unreadCount === 0}
         >
-          Tümünü okundu işaretle
+          Mark all as read
         </Button>
       </header>
 
@@ -151,8 +151,8 @@ export default function NotificationsPage() {
         ) : showEmpty ? (
           <EmptyState
             icon={Bell}
-            title="Tamamen okundu"
-            description="Henüz bir bildirimin yok."
+            title="All caught up"
+            description="You don't have any notifications yet."
           />
         ) : (
           <>
@@ -179,7 +179,7 @@ export default function NotificationsPage() {
 
             {!hasMore && items.length > 0 && (
               <p className="py-4 text-center text-2xs text-zinc-400">
-                Listenin sonuna geldin.
+                You've reached the end of the list.
               </p>
             )}
           </>

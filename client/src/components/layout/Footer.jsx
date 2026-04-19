@@ -1,9 +1,9 @@
 import { ExternalLink } from "lucide-react";
 
 const FOOTER_LINKS = [
-  { href: "#", label: "Hakkında" },
-  { href: "#", label: "Gizlilik" },
-  { href: "#", label: "Şartlar" },
+  { href: "#", label: "About" },
+  { href: "#", label: "Privacy" },
+  { href: "#", label: "Terms" },
 ];
 
 /**
@@ -16,7 +16,7 @@ export default function Footer() {
     <footer className="mt-12 hidden border-t border-zinc-200 py-6 text-xs text-zinc-500 md:block dark:border-zinc-800">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:px-6">
         <p>
-          Pulse · © {new Date().getFullYear()} — bir his, bir paylaşım.
+          Pulse · © {new Date().getFullYear()} — one feeling, one post at a time.
         </p>
         <ul className="flex items-center gap-4">
           {FOOTER_LINKS.map((link) => (
@@ -34,7 +34,7 @@ export default function Footer() {
               href="https://github.com/"
               target="_blank"
               rel="noreferrer noopener"
-              aria-label="GitHub deposu"
+              aria-label="GitHub repository"
               className="inline-flex items-center gap-1 transition-colors duration-fast hover:text-zinc-900 dark:hover:text-zinc-200"
             >
               GitHub

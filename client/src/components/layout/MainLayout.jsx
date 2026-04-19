@@ -24,7 +24,7 @@ export default function MainLayout() {
         href="#main"
         className="sr-only-focusable absolute left-2 top-2 z-50 rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-md focus:outline-none"
       >
-        İçeriğe atla
+        Skip to content
       </a>
 
       <Navbar />
@@ -32,7 +32,7 @@ export default function MainLayout() {
       {!online && (
         <div className="mx-auto w-full max-w-2xl px-4 pt-3 sm:px-6">
           <Banner variant="warning">
-            Çevrimdışısın — bazı özellikler çalışmayabilir.
+            You're offline — some features may not work.
           </Banner>
         </div>
       )}

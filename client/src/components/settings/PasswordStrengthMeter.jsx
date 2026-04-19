@@ -27,7 +27,7 @@ export default function PasswordStrengthMeter({ score = 0 }) {
         className="mt-1 text-2xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
         aria-live="polite"
       >
-        Şifre gücü: {STRENGTH_LABELS[score] ?? STRENGTH_LABELS[0]}
+        Password strength: {STRENGTH_LABELS[score] ?? STRENGTH_LABELS[0]}
       </p>
     </div>
   );

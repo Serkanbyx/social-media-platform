@@ -1,5 +1,5 @@
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { tr } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -15,8 +15,8 @@ const toDate = (input) => {
 
 /**
  * formatRelative — short relative time for feed/post cards.
- * Within 7 days: "5dk", "3sa", "2g". Past that, falls back to short
- * absolute (`"14 Mar"` or `"14 Mar 2025"` if a different year).
+ * Within 7 days: "5m", "3h", "2d". Past that, falls back to short
+ * absolute (`"Mar 14"` or `"Mar 14, 2025"` if a different year).
  */
 export function formatRelative(input) {
   const date = toDate(input);
@@ -25,17 +25,17 @@ export function formatRelative(input) {
 
   if (Math.abs(diff) < SEVEN_DAYS_MS) {
     return formatDistanceToNowStrict(date, {
-      locale: tr,
+      locale: enUS,
       addSuffix: false,
     })
-      .replace("saniye", "sn")
-      .replace("dakika", "dk")
-      .replace("saat", "sa")
-      .replace("gün", "g");
+      .replace(/\s?seconds?$/, "s")
+      .replace(/\s?minutes?$/, "m")
+      .replace(/\s?hours?$/, "h")
+      .replace(/\s?days?$/, "d");
   }
 
   const sameYear = date.getFullYear() === new Date().getFullYear();
-  return format(date, sameYear ? "d MMM" : "d MMM yyyy", { locale: tr });
+  return format(date, sameYear ? "MMM d" : "MMM d, yyyy", { locale: enUS });
 }
 
 /**
@@ -45,7 +45,7 @@ export function formatRelative(input) {
 export function formatAbsolute(input) {
   const date = toDate(input);
   if (!date) return "";
-  return format(date, "d MMM yyyy · HH:mm", { locale: tr });
+  return format(date, "MMM d, yyyy · HH:mm", { locale: enUS });
 }
 
 /**

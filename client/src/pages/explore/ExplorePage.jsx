@@ -8,7 +8,6 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Flame, Search, SearchX, Users, X } from "lucide-react";
 
-import Badge from "../../components/ui/Badge.jsx";
 import Button from "../../components/ui/Button.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import IconButton from "../../components/ui/IconButton.jsx";
@@ -106,7 +105,7 @@ export default function ExplorePage() {
   // can surface a subtle spinner inside the input's right addon.
   const pendingDebounce = query.trim() !== debouncedQuery;
 
-  useDocumentTitle(hasQuery ? `Ara: "${activeQuery}"` : "Keşfet");
+  useDocumentTitle(hasQuery ? `Search: "${activeQuery}"` : "Explore");
 
   // ----- URL sync (debounced query <-> ?q=) -----
   // Bidirectional: typing updates the URL (debounced, replace history so
@@ -165,7 +164,7 @@ export default function ExplorePage() {
       setHasMore(Boolean(data?.hasMore));
     } catch {
       if (requestIdRef.current !== requestId) return;
-      setPostsError("Gönderiler yüklenemedi.");
+      setPostsError("Couldn't load posts.");
       setPosts([]);
       setHasMore(false);
     } finally {
@@ -339,8 +338,8 @@ export default function ExplorePage() {
           onChange={handleQueryChange}
           onKeyDown={handleKeyDown}
           maxLength={MAX_QUERY_LENGTH}
-          placeholder="Gönderi veya kişi ara"
-          aria-label="Gönderi veya kişi ara"
+          placeholder="Search posts or people"
+          aria-label="Search posts or people"
           autoComplete="off"
           spellCheck={false}
           leftAddon={<Search className="size-5" aria-hidden="true" />}
@@ -352,7 +351,7 @@ export default function ExplorePage() {
                 icon={X}
                 size="sm"
                 variant="ghost"
-                aria-label="Aramayı temizle"
+                aria-label="Clear search"
                 onClick={handleClearQuery}
               />
             ) : null
@@ -375,7 +374,7 @@ export default function ExplorePage() {
                 className="size-4 text-zinc-400 dark:text-zinc-500"
                 aria-hidden="true"
               />
-              Kişiler
+              People
             </h2>
             {peopleHasMore && (
               <button
@@ -383,7 +382,7 @@ export default function ExplorePage() {
                 onClick={() => setPeopleExpanded((value) => !value)}
                 className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
               >
-                {peopleExpanded ? "Daha az göster" : "Tümünü gör"}
+                {peopleExpanded ? "Show less" : "See all"}
               </button>
             )}
           </header>
@@ -394,7 +393,7 @@ export default function ExplorePage() {
             </ul>
           ) : people.length === 0 ? (
             <p className="rounded-xl border border-dashed border-zinc-200 p-4 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-              Bu aramayla eşleşen kişi yok.
+              No people match this search.
             </p>
           ) : (
             <ul className="space-y-2">
@@ -422,13 +421,13 @@ export default function ExplorePage() {
                 id="explore-posts-title"
                 className="text-sm font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300"
               >
-                Gönderiler
+                Posts
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Results for{" "}
                 <span className="text-zinc-700 dark:text-zinc-200">
                   &quot;{activeQuery}&quot;
-                </span>{" "}
-                için sonuçlar
+                </span>
               </p>
             </>
           ) : (
@@ -441,10 +440,10 @@ export default function ExplorePage() {
                   className="size-5 text-amber-500"
                   aria-hidden="true"
                 />
-                Trend gönderiler
+                Trending posts
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Son 7 günün öne çıkan paylaşımları
+                Standout posts from the last 7 days
               </p>
             </>
           )}
@@ -454,7 +453,7 @@ export default function ExplorePage() {
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
             <span>{postsError}</span>
             <Button variant="secondary" size="sm" onClick={fetchPosts}>
-              Tekrar dene
+              Try again
             </Button>
           </div>
         )}
@@ -478,18 +477,18 @@ export default function ExplorePage() {
           (hasQuery ? (
             <EmptyState
               icon={SearchX}
-              title="Sonuç bulunamadı"
-              description="Farklı bir kelimeyle aramayı dene."
+              title="No results found"
+              description="Try searching with a different keyword."
             />
           ) : (
             <EmptyState
               icon={Flame}
-              title="Henüz trend bir şey yok"
-              description="İlk paylaşımı yaparak burayı sen başlatabilirsin."
+              title="Nothing trending yet"
+              description="Be the first to share a post and kick things off."
               action={
                 user
-                  ? { label: "Gönderi oluştur", href: "/posts/new" }
-                  : { label: "Giriş yap", href: "/login" }
+                  ? { label: "Create post", href: "/posts/new" }
+                  : { label: "Sign in", href: "/login" }
               }
             />
           ))}
@@ -512,20 +511,19 @@ export default function ExplorePage() {
               {posts.map((post, index) => (
                 <li
                   key={post._id}
-                  className="relative transition-all duration-base hover:-translate-y-0.5 hover:shadow-md motion-safe:animate-fade-up"
+                  className="transition-all duration-base hover:-translate-y-0.5 hover:shadow-md motion-safe:animate-fade-up"
                 >
                   {index < TRENDING_BADGE_LIMIT && (
-                    <Badge
-                      variant="brand"
-                      size="sm"
-                      className="pointer-events-none absolute -top-2 right-3 z-10 shadow-sm"
-                    >
-                      <Flame
-                        className="mr-1 size-3"
-                        aria-hidden="true"
-                      />
-                      Trend
-                    </Badge>
+                    <div className="mb-1.5 flex items-center gap-1 px-1 text-2xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
+                      <Flame className="size-3" aria-hidden="true" />
+                      <span>Trending</span>
+                      <span aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">
+                        ·
+                      </span>
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        #{index + 1}
+                      </span>
+                    </div>
                   )}
                   <PostCard
                     post={post}
@@ -542,7 +540,7 @@ export default function ExplorePage() {
             {paginating && (
               <div className="flex items-center justify-center gap-2 py-4 text-sm text-zinc-500 dark:text-zinc-400">
                 <Spinner size="md" />
-                <span>Daha fazla yükleniyor…</span>
+                <span>Loading more…</span>
               </div>
             )}
           </div>
@@ -550,7 +548,7 @@ export default function ExplorePage() {
 
         {showPostsList && !hasMore && (
           <p className="py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-            Tümünü gördün
+            You're all caught up
           </p>
         )}
       </section>
@@ -559,8 +557,8 @@ export default function ExplorePage() {
       <Modal
         open={authPromptOpen}
         onClose={() => setAuthPromptOpen(false)}
-        title="Etkileşim için giriş yap"
-        description="Pulse'ta beğenmek, takip etmek ve yorum yazmak için bir hesaba ihtiyacın var."
+        title="Sign in to interact"
+        description="You need an account to like, follow and comment on Pulse."
         size="sm"
         footer={
           <>
@@ -569,7 +567,7 @@ export default function ExplorePage() {
               size="sm"
               onClick={() => setAuthPromptOpen(false)}
             >
-              Vazgeç
+              Cancel
             </Button>
             <Button
               variant="secondary"
@@ -579,7 +577,7 @@ export default function ExplorePage() {
                 navigate("/register");
               }}
             >
-              Kayıt ol
+              Sign up
             </Button>
             <Button
               variant="primary"
@@ -589,13 +587,13 @@ export default function ExplorePage() {
                 navigate("/login");
               }}
             >
-              Giriş yap
+              Sign in
             </Button>
           </>
         }
       >
         <p>
-          Hesabınla anında geri döneceksin — sayfa konumun korunur.
+          You'll be back instantly — your page position is preserved.
         </p>
       </Modal>
     </div>

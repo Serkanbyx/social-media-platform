@@ -11,10 +11,10 @@ import Navbar from "./Navbar.jsx";
 import ScrollToTop from "./ScrollToTop.jsx";
 
 const NAV = [
-  { to: "/admin", end: true, label: "Panel", icon: LayoutDashboard },
-  { to: "/admin/users", label: "Kullanıcılar", icon: Users },
-  { to: "/admin/posts", label: "Gönderiler", icon: Newspaper },
-  { to: "/admin/comments", label: "Yorumlar", icon: MessageSquare },
+  { to: "/admin", end: true, label: "Dashboard", icon: LayoutDashboard },
+  { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/posts", label: "Posts", icon: Newspaper },
+  { to: "/admin/comments", label: "Comments", icon: MessageSquare },
 ];
 
 const itemClass = ({ isActive }) =>
@@ -47,7 +47,7 @@ export default function AdminLayout() {
     const match = NAV.find((item) =>
       item.end ? pathname === item.to : pathname.startsWith(item.to)
     );
-    return match ? match.label : "Panel";
+    return match ? match.label : "Dashboard";
   }, [pathname]);
 
   return (
@@ -59,9 +59,9 @@ export default function AdminLayout() {
         <aside className="hidden lg:block">
           <div className="sticky top-20 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <p className="px-2 pb-2 text-2xs font-semibold uppercase tracking-wide text-zinc-500">
-              Yönetim
+              Admin
             </p>
-            <nav aria-label="Yönetim navigasyonu" className="flex flex-col gap-0.5">
+            <nav aria-label="Admin navigation" className="flex flex-col gap-0.5">
               {NAV.map(({ to, label, icon: Icon, end }) => (
                 <NavLink key={to} to={to} end={end} className={itemClass}>
                   <Icon className="size-4" aria-hidden="true" />
@@ -74,7 +74,7 @@ export default function AdminLayout() {
 
         <div className="flex flex-col">
           <nav
-            aria-label="Yönetim navigasyonu (mobil)"
+            aria-label="Admin navigation (mobile)"
             className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-4 lg:hidden"
           >
             {NAV.map(({ to, label, end }) => (
@@ -85,7 +85,7 @@ export default function AdminLayout() {
           </nav>
 
           <header className="mb-4">
-            <p className="text-xs text-zinc-500">Yönetim › {currentLabel}</p>
+            <p className="text-xs text-zinc-500">Admin › {currentLabel}</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight">{currentLabel}</h1>
           </header>
 

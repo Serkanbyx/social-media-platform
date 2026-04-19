@@ -62,21 +62,21 @@ import notify from "../../utils/notify.js";
 const SEARCH_DEBOUNCE_MS = 350;
 
 const ROLE_OPTIONS = [
-  { value: "all", label: "Tüm roller" },
-  { value: "user", label: "Kullanıcı" },
+  { value: "all", label: "All roles" },
+  { value: "user", label: "User" },
   { value: "admin", label: "Admin" },
 ];
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "Tüm durumlar" },
-  { value: "true", label: "Aktif" },
-  { value: "false", label: "Devre dışı" },
+  { value: "all", label: "All statuses" },
+  { value: "true", label: "Active" },
+  { value: "false", label: "Disabled" },
 ];
 
 const ROW_COLUMNS = 7;
 
 export default function AdminUsers() {
-  useDocumentTitle("Yönetim · Kullanıcılar");
+  useDocumentTitle("Admin · Users");
 
   const { user: viewer } = useAuth();
   const viewerId = viewer ? String(viewer._id) : "";
@@ -125,7 +125,7 @@ export default function AdminUsers() {
       setTotalPages(typeof data?.totalPages === "number" ? data.totalPages : 1);
     } catch {
       if (requestIdRef.current !== requestId) return;
-      setError("Kullanıcılar yüklenemedi.");
+      setError("Couldn't load users.");
       setItems([]);
       setTotal(0);
       setTotalPages(1);
@@ -171,13 +171,13 @@ export default function AdminUsers() {
         await adminService.updateUserRole(target._id, nextRole);
         notify.success(
           nextRole === "admin"
-            ? `@${target.username} yönetici yapıldı.`
-            : `@${target.username} kullanıcıya çevrildi.`
+            ? `@${target.username} promoted to admin.`
+            : `@${target.username} changed to user.`
         );
       } catch (err) {
         updateLocalUser(target._id, { role: previousRole });
         const message =
-          err?.response?.data?.message || "Rol değiştirilemedi.";
+          err?.response?.data?.message || "Couldn't change role.";
         notify.error(message);
       }
     },
@@ -194,13 +194,13 @@ export default function AdminUsers() {
         await adminService.setUserActive(target._id, nextActive);
         notify.success(
           nextActive
-            ? `@${target.username} yeniden aktif.`
-            : `@${target.username} devre dışı bırakıldı.`
+            ? `@${target.username} re-enabled.`
+            : `@${target.username} disabled.`
         );
       } catch (err) {
         updateLocalUser(target._id, { isActive: previousActive });
         const message =
-          err?.response?.data?.message || "Hesap durumu değiştirilemedi.";
+          err?.response?.data?.message || "Couldn't change account status.";
         notify.error(message);
       }
     },
@@ -217,11 +217,11 @@ export default function AdminUsers() {
       await adminService.deleteUser(pendingDelete._id);
       setItems((prev) => prev.filter((row) => row._id !== pendingDelete._id));
       setTotal((prev) => Math.max(0, prev - 1));
-      notify.success(`@${pendingDelete.username} silindi.`);
+      notify.success(`@${pendingDelete.username} deleted.`);
       closeDelete();
     } catch (err) {
       const message =
-        err?.response?.data?.message || "Kullanıcı silinemedi.";
+        err?.response?.data?.message || "Couldn't delete user.";
       notify.error(message);
       closeDelete();
     }
@@ -233,8 +233,8 @@ export default function AdminUsers() {
       <AdminFiltersBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Kullanıcı adı veya isim ara"
-        searchAriaLabel="Kullanıcı ara"
+        searchPlaceholder="Search by username or name"
+        searchAriaLabel="Search users"
         searchPending={search.trim() !== debouncedSearch}
         hasActiveFilters={hasActiveFilters}
         onReset={handleResetFilters}
@@ -245,17 +245,17 @@ export default function AdminUsers() {
               aria-hidden="true"
             >
               <Filter className="size-3.5" />
-              Filtrele
+              Filter
             </span>
             <AdminSelect
-              label="Rol"
+              label="Role"
               inline
               value={role}
               onChange={setRole}
               options={ROLE_OPTIONS}
             />
             <AdminSelect
-              label="Durum"
+              label="Status"
               inline
               value={status}
               onChange={setStatus}
@@ -269,7 +269,7 @@ export default function AdminUsers() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           <span>{error}</span>
           <Button variant="secondary" size="sm" onClick={fetchUsers}>
-            Tekrar dene
+            Try again
           </Button>
         </div>
       ) : (
@@ -279,14 +279,14 @@ export default function AdminUsers() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 z-10 bg-zinc-50/80 backdrop-blur dark:bg-zinc-900/80">
                 <tr className="text-left text-2xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  <th className="px-4 py-3">Kullanıcı</th>
-                  <th className="px-4 py-3">E-posta</th>
-                  <th className="px-4 py-3">Rol</th>
-                  <th className="px-4 py-3">Durum</th>
-                  <th className="px-4 py-3">Katılım</th>
-                  <th className="px-4 py-3 text-right">Gönderi</th>
-                  <th className="px-4 py-3 text-right">Takipçi</th>
-                  <th className="px-4 py-3 text-right">İşlem</th>
+                  <th className="px-4 py-3">User</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Joined</th>
+                  <th className="px-4 py-3 text-right">Posts</th>
+                  <th className="px-4 py-3 text-right">Followers</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -304,18 +304,18 @@ export default function AdminUsers() {
                         icon={UsersIcon}
                         title={
                           hasActiveFilters
-                            ? "Bu filtrelerle eşleşen kullanıcı yok"
-                            : "Kullanıcı bulunamadı"
+                            ? "No users match these filters"
+                            : "No users found"
                         }
                         description={
                           hasActiveFilters
-                            ? "Aramayı değiştir veya filtreleri sıfırla."
-                            : "Henüz kayıtlı kullanıcı yok."
+                            ? "Adjust your search or reset the filters."
+                            : "There are no registered users yet."
                         }
                         action={
                           hasActiveFilters
                             ? {
-                                label: "Filtreleri sıfırla",
+                                label: "Reset filters",
                                 onClick: handleResetFilters,
                               }
                             : undefined
@@ -361,18 +361,18 @@ export default function AdminUsers() {
                 icon={UsersIcon}
                 title={
                   hasActiveFilters
-                    ? "Bu filtrelerle eşleşen kullanıcı yok"
-                    : "Kullanıcı bulunamadı"
+                    ? "No users match these filters"
+                    : "No users found"
                 }
                 description={
                   hasActiveFilters
-                    ? "Aramayı değiştir veya filtreleri sıfırla."
-                    : "Henüz kayıtlı kullanıcı yok."
+                    ? "Adjust your search or reset the filters."
+                    : "There are no registered users yet."
                 }
                 action={
                   hasActiveFilters
                     ? {
-                        label: "Filtreleri sıfırla",
+                        label: "Reset filters",
                         onClick: handleResetFilters,
                       }
                     : undefined
@@ -407,15 +407,15 @@ export default function AdminUsers() {
 
       <ConfirmModal
         open={Boolean(pendingDelete)}
-        title="Kullanıcıyı sil"
+        title="Delete user"
         description={
           pendingDelete
-            ? `@${pendingDelete.username} kullanıcısını silmek üzeresin. Tüm gönderileri, yorumları, takipleri ve bildirimleri kalıcı olarak kaldırılacak. Bu işlem geri alınamaz.`
+            ? `You're about to delete @${pendingDelete.username}. All of their posts, comments, follows and notifications will be permanently removed. This action cannot be undone.`
             : ""
         }
-        confirmLabel="Kalıcı olarak sil"
-        cancelLabel="Vazgeç"
-        busyLabel="Siliniyor…"
+        confirmLabel="Delete permanently"
+        cancelLabel="Cancel"
+        busyLabel="Deleting…"
         danger
         onConfirm={handleConfirmDelete}
         onCancel={closeDelete}
@@ -441,19 +441,19 @@ function useRowProtections(row, viewerId, activeAdminCount) {
       cannotDisable: isSelf || isLastAdmin,
       cannotDelete: isSelf || isLastAdmin,
       cannotChangeRoleReason: isSelf
-        ? "Kendi rolünü değiştiremezsin."
+        ? "You can't change your own role."
         : isLastAdmin
-          ? "En az bir aktif yönetici kalmalı."
+          ? "At least one active admin must remain."
           : "",
       cannotDisableReason: isSelf
-        ? "Kendi hesabını devre dışı bırakamazsın."
+        ? "You can't disable your own account."
         : isLastAdmin
-          ? "Son aktif yöneticiyi devre dışı bırakamazsın."
+          ? "You can't disable the last active admin."
           : "",
       cannotDeleteReason: isSelf
-        ? "Kendi hesabını silemezsin."
+        ? "You can't delete your own account."
         : isLastAdmin
-          ? "Son aktif yöneticiyi silemezsin."
+          ? "You can't delete the last active admin."
           : "",
     };
   }, [activeAdminCount, row._id, row.isActive, row.role, viewerId]);
@@ -467,7 +467,7 @@ function RoleBadge({ role }) {
     </Badge>
   ) : (
     <Badge variant="default" size="sm">
-      Kullanıcı
+      User
     </Badge>
   );
 }
@@ -475,11 +475,11 @@ function RoleBadge({ role }) {
 function StatusBadge({ active }) {
   return active ? (
     <Badge variant="success" size="sm">
-      Aktif
+      Active
     </Badge>
   ) : (
     <Badge variant="default" size="sm">
-      Devre dışı
+      Disabled
     </Badge>
   );
 }
@@ -495,7 +495,7 @@ function RowActions({
     {
       key: "toggle-role",
       label:
-        row.role === "admin" ? "Yöneticiliği geri al" : "Yönetici yap",
+        row.role === "admin" ? "Revoke admin" : "Make admin",
       icon: row.role === "admin" ? ShieldOff : Shield,
       disabled: protections.cannotChangeRole,
       onClick: () =>
@@ -503,7 +503,7 @@ function RowActions({
     },
     {
       key: "toggle-active",
-      label: row.isActive ? "Hesabı devre dışı bırak" : "Hesabı yeniden aktive et",
+      label: row.isActive ? "Disable account" : "Re-enable account",
       icon: row.isActive ? ShieldOff : Shield,
       disabled: protections.cannotDisable,
       onClick: () => onActiveToggle(row, !row.isActive),
@@ -511,7 +511,7 @@ function RowActions({
     { divider: true },
     {
       key: "delete",
-      label: "Kullanıcıyı sil",
+      label: "Delete user",
       icon: Trash2,
       danger: true,
       disabled: protections.cannotDelete,
@@ -528,7 +528,7 @@ function RowActions({
           icon={MoreHorizontal}
           variant="ghost"
           size="sm"
-          aria-label={`@${row.username} işlemleri`}
+          aria-label={`Actions for @${row.username}`}
         />
       }
       items={items}
@@ -571,7 +571,7 @@ function UserRow({
               </Link>
               {protections.isSelf && (
                 <Badge variant="info" size="sm">
-                  Sen
+                  You
                 </Badge>
               )}
             </div>
@@ -591,12 +591,12 @@ function UserRow({
           <span>
             <AdminSelect
               inline
-              label="Rol"
+              label="Role"
               value={row.role}
               disabled={protections.cannotChangeRole}
               onChange={(value) => onRoleChange(row, value)}
               options={[
-                { value: "user", label: "Kullanıcı" },
+                { value: "user", label: "User" },
                 { value: "admin", label: "Admin" },
               ]}
             />
@@ -673,7 +673,7 @@ function UserCardRow({
             </Link>
             {protections.isSelf && (
               <Badge variant="info" size="sm">
-                Sen
+                You
               </Badge>
             )}
             <RoleBadge role={row.role} />
@@ -685,7 +685,7 @@ function UserCardRow({
           <dl className="grid grid-cols-2 gap-2 text-xs text-zinc-600 dark:text-zinc-400">
             <div>
               <dt className="text-2xs uppercase tracking-wide text-zinc-400">
-                Gönderi
+                Posts
               </dt>
               <dd className="tnum text-zinc-800 dark:text-zinc-200">
                 {compactCount(row.postsCount ?? 0)}
@@ -693,7 +693,7 @@ function UserCardRow({
             </div>
             <div>
               <dt className="text-2xs uppercase tracking-wide text-zinc-400">
-                Takipçi
+                Followers
               </dt>
               <dd className="tnum text-zinc-800 dark:text-zinc-200">
                 {compactCount(row.followersCount ?? 0)}
@@ -701,7 +701,7 @@ function UserCardRow({
             </div>
             <div className="col-span-2">
               <dt className="text-2xs uppercase tracking-wide text-zinc-400">
-                Katılım
+                Joined
               </dt>
               <dd className="tnum text-zinc-800 dark:text-zinc-200">
                 {formatAbsolute(row.createdAt)}

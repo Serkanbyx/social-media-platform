@@ -74,7 +74,7 @@ function SearchResults({ query, results, loading, onPick }) {
   if (!query) {
     return (
       <p className="px-4 py-6 text-center text-xs text-zinc-500">
-        Aramaya başlamak için yazmaya başlayın
+        Start typing to search
       </p>
     );
   }
@@ -98,7 +98,7 @@ function SearchResults({ query, results, loading, onPick }) {
   if (!results.length) {
     return (
       <p className="px-4 py-6 text-center text-xs text-zinc-500">
-        “{query}” için sonuç bulunamadı
+        No results for “{query}”
       </p>
     );
   }
@@ -190,7 +190,7 @@ function SearchPopoverInner({ onClose, fullScreen }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Kullanıcı ara"
+        aria-label="Search users"
         className="fixed inset-0 z-40 flex flex-col bg-white dark:bg-zinc-950"
       >
         <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
@@ -203,13 +203,13 @@ function SearchPopoverInner({ onClose, fullScreen }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Kullanıcı ara…"
+            placeholder="Search users…"
             className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
           />
           <button
             type="button"
             onClick={onClose}
-            aria-label="Aramayı kapat"
+            aria-label="Close search"
             className="rounded-md p-1.5 text-zinc-500 transition-colors duration-fast hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
             <X className="size-4" />
@@ -271,7 +271,7 @@ function UserMenu({ user, onLogout }) {
 
   const ThemeIcon = theme === "dark" ? Sun : Moon;
   const themeLabel =
-    theme === "system" ? "Sistem teması" : theme === "dark" ? "Aydınlık tema" : "Karanlık tema";
+    theme === "system" ? "System theme" : theme === "dark" ? "Light theme" : "Dark theme";
 
   return (
     <div className="relative" ref={wrapperRef}>
@@ -288,7 +288,7 @@ function UserMenu({ user, onLogout }) {
           username={user.username}
           size="sm"
         />
-        <span className="sr-only">Hesap menüsünü aç</span>
+        <span className="sr-only">Open account menu</span>
       </button>
 
       {open && (
@@ -327,7 +327,7 @@ function UserMenu({ user, onLogout }) {
             className="flex items-center gap-2.5 px-3 py-2 text-sm transition-colors duration-fast hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
           >
             <SettingsIcon className="size-4 text-zinc-500" aria-hidden="true" />
-            Ayarlar
+            Settings
           </Link>
 
           {user.role === "admin" && (
@@ -338,7 +338,7 @@ function UserMenu({ user, onLogout }) {
               className="flex items-center gap-2.5 px-3 py-2 text-sm transition-colors duration-fast hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
             >
               <Shield className="size-4 text-zinc-500" aria-hidden="true" />
-              Yönetim paneli
+              Admin panel
             </Link>
           )}
 
@@ -367,7 +367,7 @@ function UserMenu({ user, onLogout }) {
             className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-rose-600 transition-colors duration-fast hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
           >
             <LogOut className="size-4" aria-hidden="true" />
-            Çıkış yap
+            Sign out
           </button>
         </div>
       )}
@@ -408,11 +408,11 @@ export default function Navbar() {
 
   // Index route renders FeedPage for signed-in users and LandingPage for
   // guests. Reflect that in the label so the desktop nav doesn't promise
-  // an "Akış" surface to a visitor who isn't actually signed in yet.
+  // a "Feed" surface to a visitor who isn't actually signed in yet.
   const desktopNav = useMemo(
     () => [
-      { to: "/", label: user ? "Akış" : "Ana sayfa", end: true },
-      { to: "/explore", label: "Keşfet" },
+      { to: "/", label: user ? "Feed" : "Home", end: true },
+      { to: "/explore", label: "Explore" },
     ],
     [user]
   );
@@ -423,7 +423,7 @@ export default function Navbar() {
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4 sm:px-6">
           <Link
             to="/"
-            aria-label="Pulse ana sayfa"
+            aria-label="Pulse home"
             className="text-brand-600 transition-transform duration-fast hover:scale-[1.03] dark:text-brand-400"
           >
             <img src={logoUrl} alt="Pulse" className="hidden h-7 w-auto md:block" />
@@ -435,7 +435,7 @@ export default function Navbar() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex" aria-label="Birincil">
+          <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
             {desktopNav.map((link) => (
               <NavLink key={link.to} to={link.to} end={link.end} className={navLinkClass}>
                 {link.label}
@@ -455,8 +455,8 @@ export default function Navbar() {
               <input
                 type="search"
                 onFocus={() => setDesktopSearchOpen(true)}
-                placeholder="Kullanıcı ara…"
-                aria-label="Kullanıcı ara"
+                placeholder="Search users…"
+                aria-label="Search users"
                 className="w-full rounded-full border border-zinc-200 bg-zinc-50 py-1.5 pl-9 pr-3 text-sm placeholder:text-zinc-400 transition-colors duration-fast focus:border-brand-300 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:focus:border-brand-700 dark:focus:bg-zinc-900"
                 onChange={() => setDesktopSearchOpen(true)}
               />
@@ -469,7 +469,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setMobileSearchOpen(true)}
-              aria-label="Kullanıcı ara"
+              aria-label="Search users"
               className="inline-flex size-9 items-center justify-center rounded-full text-zinc-600 transition-colors duration-fast hover:bg-zinc-100 hover:text-zinc-900 md:hidden dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
               <Search className="size-5" aria-hidden="true" />
@@ -485,13 +485,13 @@ export default function Navbar() {
                   to="/login"
                   className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors duration-fast hover:bg-zinc-100 sm:inline-flex dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
-                  Giriş yap
+                  Sign in
                 </Link>
                 <Link
                   to="/register"
                   className="inline-flex items-center justify-center rounded-full bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-xs transition-colors duration-fast hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400"
                 >
-                  Kayıt ol
+                  Sign up
                 </Link>
               </div>
             )}
@@ -507,40 +507,40 @@ export default function Navbar() {
 
       {user && (
         <nav
-          aria-label="Mobil navigasyon"
+          aria-label="Mobile navigation"
           className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-stretch border-t border-zinc-200 bg-white/95 backdrop-blur md:hidden dark:border-zinc-800 dark:bg-zinc-950/95"
         >
-          <NavLink to="/" end className={tabClass} aria-label="Akış">
+          <NavLink to="/" end className={tabClass} aria-label="Feed">
             <Home className="size-5" aria-hidden="true" />
-            Akış
+            Feed
           </NavLink>
-          <NavLink to="/explore" className={tabClass} aria-label="Keşfet">
+          <NavLink to="/explore" className={tabClass} aria-label="Explore">
             <Compass className="size-5" aria-hidden="true" />
-            Keşfet
+            Explore
           </NavLink>
           <NavLink
             to="/posts/new"
-            aria-label="Yeni gönderi"
+            aria-label="New post"
             className="-mt-5 flex w-14 items-center justify-center"
           >
             <span className="flex size-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-md transition-transform duration-fast hover:bg-brand-700 motion-safe:active:scale-95 dark:bg-brand-500 dark:hover:bg-brand-400">
               <Plus className="size-5" aria-hidden="true" />
             </span>
           </NavLink>
-          <NavLink to="/notifications" className={tabClass} aria-label="Bildirimler">
+          <NavLink to="/notifications" className={tabClass} aria-label="Notifications">
             <span className="relative">
               <Bell className="size-5" aria-hidden="true" />
               <UnreadBadge count={unreadCount} />
             </span>
-            Bildirimler
+            Notifications
           </NavLink>
           <NavLink
             to={`/u/${user.username}`}
             className={tabClass}
-            aria-label="Profilim"
+            aria-label="My profile"
           >
             <UserIcon className="size-5" aria-hidden="true" />
-            Profil
+            Profile
           </NavLink>
         </nav>
       )}

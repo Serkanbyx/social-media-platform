@@ -5,10 +5,10 @@ import Navbar from "./Navbar.jsx";
 import ScrollToTop from "./ScrollToTop.jsx";
 
 const SECTIONS = [
-  { to: "/settings/account", label: "Hesap" },
-  { to: "/settings/appearance", label: "Görünüm" },
-  { to: "/settings/privacy", label: "Gizlilik" },
-  { to: "/settings/notifications", label: "Bildirimler" },
+  { to: "/settings/account", label: "Account" },
+  { to: "/settings/appearance", label: "Appearance" },
+  { to: "/settings/privacy", label: "Privacy" },
+  { to: "/settings/notifications", label: "Notifications" },
 ];
 
 const railClass = ({ isActive }) =>
@@ -38,7 +38,7 @@ export default function SettingsLayout() {
   const { pathname } = useLocation();
 
   const currentLabel = useMemo(
-    () => SECTIONS.find((s) => pathname.startsWith(s.to))?.label || "Hesap",
+    () => SECTIONS.find((s) => pathname.startsWith(s.to))?.label || "Account",
     [pathname]
   );
 
@@ -50,7 +50,7 @@ export default function SettingsLayout() {
       <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 md:grid md:grid-cols-[200px_1fr] md:gap-8">
         <aside className="hidden md:block">
           <div className="sticky top-20">
-            <nav aria-label="Ayar bölümleri" className="flex flex-col gap-0.5">
+            <nav aria-label="Settings sections" className="flex flex-col gap-0.5">
               {SECTIONS.map((s) => (
                 <NavLink key={s.to} to={s.to} className={railClass}>
                   {s.label}
@@ -62,7 +62,7 @@ export default function SettingsLayout() {
 
         <div className="flex flex-col">
           <nav
-            aria-label="Ayar bölümleri (mobil)"
+            aria-label="Settings sections (mobile)"
             className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-4 md:hidden"
           >
             {SECTIONS.map((s) => (
@@ -73,7 +73,7 @@ export default function SettingsLayout() {
           </nav>
 
           <header className="mb-4 hidden md:block">
-            <p className="text-xs text-zinc-500">Ayarlar › {currentLabel}</p>
+            <p className="text-xs text-zinc-500">Settings › {currentLabel}</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight">{currentLabel}</h1>
           </header>
 

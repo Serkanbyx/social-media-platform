@@ -2,9 +2,8 @@ import toast from "react-hot-toast";
 
 /**
  * Friendly fallback shown when no specific server message is available.
- * Kept Turkish to match the app-wide locale.
  */
-const DEFAULT_ERROR_MESSAGE = "Bir şeyler ters gitti. Lütfen tekrar dene.";
+const DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again.";
 
 /**
  * Extract a human-readable message from anything we might pass to
@@ -15,7 +14,7 @@ const DEFAULT_ERROR_MESSAGE = "Bir şeyler ters gitti. Lütfen tekrar dene.";
  *  - generic `Error` instances
  *  - validate-middleware payloads (`{ errors: [{ message }] }`)
  *
- * Falls back to a friendly Turkish copy so the UI never surfaces raw
+ * Falls back to a friendly default copy so the UI never surfaces raw
  * stack traces or "[object Object]".
  */
 const resolveErrorMessage = (input) => {

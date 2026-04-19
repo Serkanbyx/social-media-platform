@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 export default function Spinner({
   size = "md",
   fullScreen = false,
-  label = "Yükleniyor",
+  label = "Loading",
   className = "",
 }) {
   const sizeClass =

@@ -10,7 +10,7 @@ import Spinner from "../ui/Spinner.jsx";
  * Provides:
  *  - debounced search input (parent owns the value + debouncing)
  *  - flexible "extras" slot for dropdowns / status pills / etc.
- *  - "Filtreleri sıfırla" ghost button when at least one filter is active
+ *  - "Reset filters" ghost button when at least one filter is active
  *
  * Kept dumb on purpose: the parent decides what counts as "active" and
  * how to reset; this component just lays the row out consistently and
@@ -19,7 +19,7 @@ import Spinner from "../ui/Spinner.jsx";
 export default function AdminFiltersBar({
   search,
   onSearchChange,
-  searchPlaceholder = "Ara…",
+  searchPlaceholder = "Search…",
   searchPending = false,
   hasActiveFilters = false,
   onReset,
@@ -47,7 +47,7 @@ export default function AdminFiltersBar({
                 icon={X}
                 size="sm"
                 variant="ghost"
-                aria-label="Aramayı temizle"
+                aria-label="Clear search"
                 onClick={() => onSearchChange?.("")}
               />
             ) : null
@@ -67,7 +67,7 @@ export default function AdminFiltersBar({
           onClick={onReset}
           className="shrink-0 self-start rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors duration-fast hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 sm:self-auto"
         >
-          Filtreleri sıfırla
+          Reset filters
         </button>
       )}
     </div>

@@ -205,8 +205,8 @@ export function NotificationProvider({ children }) {
             className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl bg-white p-3 text-left shadow-md ring-1 ring-zinc-200 transition-transform duration-fast motion-safe:hover:scale-[1.01] dark:bg-zinc-900 dark:ring-zinc-800 ${
               t.visible ? "animate-toast-in" : "opacity-0"
             }`}
-            aria-label={`Bildirim: ${
-              notification.sender?.name || notification.sender?.username || "Birisi"
+            aria-label={`Notification: ${
+              notification.sender?.name || notification.sender?.username || "Someone"
             } ${sentenceFor(notification.type)}`}
           >
             <Avatar
@@ -218,12 +218,12 @@ export function NotificationProvider({ children }) {
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm text-zinc-900 dark:text-zinc-100">
                 <span className="font-semibold">
-                  {notification.sender?.name || notification.sender?.username || "Birisi"}
+                  {notification.sender?.name || notification.sender?.username || "Someone"}
                 </span>{" "}
                 {sentenceFor(notification.type)}
               </span>
               <span className="mt-0.5 block text-2xs text-zinc-500">
-                {formatRelative(notification.createdAt) || "şimdi"}
+                {formatRelative(notification.createdAt) || "now"}
               </span>
             </span>
           </button>

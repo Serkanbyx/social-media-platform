@@ -10,7 +10,7 @@ export default function PlaceholderPage({ title, description, step }) {
   return (
     <section className="rounded-xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
       <p className="text-2xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
-        {step ? `Yapım aşamasında · ${step}` : "Yapım aşamasında"}
+        {step ? `Under construction · ${step}` : "Under construction"}
       </p>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">{title}</h1>
       {description && (
