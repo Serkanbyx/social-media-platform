@@ -1,9 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
 
 import App from "./App.jsx";
+import AppToaster from "./components/ui/AppToaster.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { PreferencesProvider } from "./context/PreferencesContext.jsx";
 import { SocketProvider } from "./context/SocketContext.jsx";
@@ -18,8 +18,9 @@ import "./index.css";
  *           └─ SocketProvider   (uses auth token for the WS handshake)
  *              └─ NotificationProvider (subscribes to socket events)
  *
- * `<Toaster />` lives at the root so toasts fired from any context
- * (e.g. NotificationProvider) render above the routed UI.
+ * `<AppToaster />` lives at the root so toasts fired from any context
+ * (e.g. NotificationProvider) render above the routed UI. It owns the
+ * responsive positioning + max-3 stack contract documented in STEP 37.
  */
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -29,14 +30,7 @@ createRoot(document.getElementById("root")).render(
           <SocketProvider>
             <NotificationProvider>
               <App />
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  className:
-                    "!bg-white !text-zinc-900 dark:!bg-zinc-900 dark:!text-zinc-100",
-                }}
-              />
+              <AppToaster />
             </NotificationProvider>
           </SocketProvider>
         </PreferencesProvider>

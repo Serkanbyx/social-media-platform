@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 import MainLayout from "./components/layout/MainLayout.jsx";
@@ -7,6 +7,8 @@ import SettingsLayout from "./components/layout/SettingsLayout.jsx";
 import AdminRoute from "./components/guards/AdminRoute.jsx";
 import GuestOnlyRoute from "./components/guards/GuestOnlyRoute.jsx";
 import ProtectedRoute from "./components/guards/ProtectedRoute.jsx";
+
+import ErrorBoundary from "./components/ui/ErrorBoundary.jsx";
 
 import Login from "./pages/auth/Login.jsx";
 import Register from "./pages/auth/Register.jsx";
@@ -56,6 +58,19 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
  * visitors.
  */
 export default function App() {
+  // Re-key the boundary on pathname so a render-time crash on one
+  // page doesn't keep the recovery card stuck in place after the user
+  // navigates somewhere else (e.g. clicks the Pulse logo).
+  const { pathname } = useLocation();
+
+  return (
+    <ErrorBoundary key={pathname}>
+      <AppRoutes />
+    </ErrorBoundary>
+  );
+}
+
+function AppRoutes() {
   return (
     <Routes>
       <Route element={<GuestOnlyRoute />}>
