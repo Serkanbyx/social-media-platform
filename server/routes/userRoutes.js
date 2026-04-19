@@ -5,6 +5,7 @@ import {
   getFollowers,
   getFollowing,
   searchUsers,
+  getSuggestedUsers,
   updateProfile,
 } from "../controllers/userController.js";
 import { toggleFollow } from "../controllers/followController.js";
@@ -28,6 +29,12 @@ const router = Router();
 // `validate(searchRules)` rejects empty / over-long queries with a clean
 // 400 before the controller runs the (already ReDoS-safe) regex.
 router.get("/search", optionalAuth, validate(searchRules), searchUsers);
+
+// GET /api/users/suggestions
+// "People to follow" rail used by the Explore page. Public so guests can
+// also browse popular accounts; signed-in users get a personalised list
+// (already-followed accounts and the viewer themselves are excluded).
+router.get("/suggestions", optionalAuth, getSuggestedUsers);
 
 // PATCH /api/users/me
 // Self-service profile update. `protect` guarantees `req.user` exists before

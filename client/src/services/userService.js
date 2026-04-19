@@ -48,6 +48,13 @@ export const searchUsers = async (q) => {
   return data;
 };
 
+export const getSuggestedUsers = async (limit) => {
+  const { data } = await api.get("/users/suggestions", {
+    params: limit ? { limit } : undefined,
+  });
+  return data;
+};
+
 export const updateProfile = async (payload) => {
   const { data } = await api.patch("/users/me", payload);
   return data;

@@ -24,6 +24,12 @@ const MAX_PAGE_SIZE = 50;
 // payload light enough to render instantly while the user keeps typing.
 const SEARCH_LIMIT = 20;
 
+// Suggestions endpoint defaults / cap. Kept small because the result is
+// rendered as a discovery rail, not an infinite list — the UI only ever
+// shows a handful of cards at a time.
+const SUGGESTIONS_DEFAULT_LIMIT = 10;
+const SUGGESTIONS_MAX_LIMIT = 30;
+
 // Resolve the page size from a query param, clamping into [1, MAX_PAGE_SIZE].
 // Falls back to DEFAULT_PAGE_SIZE for any non-numeric / out-of-range input.
 const resolveLimit = (raw) => {
@@ -267,6 +273,54 @@ export const searchUsers = asyncHandler(async (req, res) => {
   return res.json({ status: "success", items: users });
 });
 
+// GET /api/users/suggestions
+//
+// "People to follow" rail rendered on the Explore page when there's no
+// active search. Returns the most-followed active accounts, excluding the
+// viewer and anyone they already follow so signed-in users keep
+// discovering fresh profiles. Private accounts are still surfaced — the
+// follow flow handles request-vs-direct-follow downstream.
+//
+// Public (optionalAuth) so guests can also browse who to follow before
+// they sign up; anonymous viewers just see the global top list.
+export const getSuggestedUsers = asyncHandler(async (req, res) => {
+  const rawLimit = Number.parseInt(req.query.limit, 10);
+  const limit =
+    Number.isFinite(rawLimit) && rawLimit > 0
+      ? Math.min(rawLimit, SUGGESTIONS_MAX_LIMIT)
+      : SUGGESTIONS_DEFAULT_LIMIT;
+
+  const filter = { isActive: true };
+
+  if (req.user?._id) {
+    const excludedIds = [req.user._id];
+    if (Array.isArray(req.user.following)) {
+      excludedIds.push(...req.user.following);
+    }
+    filter._id = { $nin: excludedIds };
+  }
+
+  const users = await User.find(filter)
+    .sort({ followersCount: -1, _id: -1 })
+    .limit(limit)
+    .select(`${FOLLOW_LIST_FIELDS} followersCount`);
+
+  const items = users.map((doc) => ({
+    _id: doc._id,
+    username: doc.username,
+    name: doc.name,
+    avatar: doc.avatar
+      ? { url: doc.avatar.url || "", publicId: doc.avatar.publicId || "" }
+      : { url: "", publicId: "" },
+    bio: doc.bio || "",
+    followersCount: doc.followersCount || 0,
+    isFollowing: false,
+    isSelf: false,
+  }));
+
+  return res.json({ status: "success", items });
+});
+
 // PATCH /api/users/me
 //
 // Mass-assignment protected: only the four whitelisted top-level keys are
@@ -337,5 +391,6 @@ export default {
   getFollowers,
   getFollowing,
   searchUsers,
+  getSuggestedUsers,
   updateProfile,
 };

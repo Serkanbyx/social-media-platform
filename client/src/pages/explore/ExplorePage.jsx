@@ -60,6 +60,8 @@ const PEOPLE_PREVIEW_COUNT = 5;
 const GRID_SKELETON_COUNT = 8;
 const LIST_SKELETON_COUNT = 4;
 const TRENDING_BADGE_LIMIT = 10;
+const SUGGESTED_PEOPLE_LIMIT = 8;
+const SUGGESTED_PEOPLE_SKELETON_COUNT = 4;
 
 const sanitizeQuery = (value) => {
   if (typeof value !== "string") return "";
@@ -98,6 +100,13 @@ export default function ExplorePage() {
   const [people, setPeople] = useState([]);
   const [peopleLoading, setPeopleLoading] = useState(false);
   const [peopleExpanded, setPeopleExpanded] = useState(false);
+
+  // Suggested people are fetched once per mount (and again whenever the
+  // viewer signs in / out so the personalised exclusion list stays
+  // accurate). They are only rendered when there's no active search.
+  const [suggestedPeople, setSuggestedPeople] = useState([]);
+  const [suggestedLoading, setSuggestedLoading] = useState(true);
+  const [suggestedError, setSuggestedError] = useState("");
 
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
 
@@ -220,6 +229,35 @@ export default function ExplorePage() {
     rootMargin: "400px",
   });
 
+  // ----- Suggested people fetch (no query) -----
+  // Re-runs when the viewer's identity changes so the server-side exclusion
+  // of "people you already follow" stays in sync after a fresh login.
+  const viewerKey = user?._id || "guest";
+  useEffect(() => {
+    let cancelled = false;
+    setSuggestedLoading(true);
+    setSuggestedError("");
+
+    userService
+      .getSuggestedUsers(SUGGESTED_PEOPLE_LIMIT)
+      .then((data) => {
+        if (cancelled) return;
+        setSuggestedPeople(Array.isArray(data?.items) ? data.items : []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSuggestedPeople([]);
+        setSuggestedError("Couldn't load suggestions.");
+      })
+      .finally(() => {
+        if (!cancelled) setSuggestedLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [viewerKey]);
+
   // ----- People fetch (only when there's a query) -----
   // The "no query" reset and the "loading=true" kickoff are handled in
   // the render-time sync above, so this effect's only job is the async
@@ -329,6 +367,13 @@ export default function ExplorePage() {
       )),
     []
   );
+  const skeletonSuggestedPeople = useMemo(
+    () =>
+      Array.from({ length: SUGGESTED_PEOPLE_SKELETON_COUNT }, (_, idx) => (
+        <UserCardSkeleton key={`explore-suggested-skel-${idx}`} />
+      )),
+    []
+  );
 
   return (
     <div className="space-y-6">
@@ -413,6 +458,55 @@ export default function ExplorePage() {
           )}
         </section>
       )}
+
+      {/* ----- Suggested people (only when no active search) ----- */}
+      {!hasQuery &&
+        (suggestedLoading ||
+          suggestedPeople.length > 0 ||
+          Boolean(suggestedError)) && (
+          <section
+            aria-labelledby="explore-suggested-title"
+            className="space-y-3 motion-safe:animate-fade-up"
+          >
+            <header className="space-y-1">
+              <h2
+                id="explore-suggested-title"
+                className="flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-zinc-50"
+              >
+                <Users
+                  className="size-5 text-brand-500 dark:text-brand-400"
+                  aria-hidden="true"
+                />
+                People to follow
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {user
+                  ? "Fresh accounts you don't follow yet"
+                  : "Popular accounts on Pulse"}
+              </p>
+            </header>
+
+            {suggestedLoading ? (
+              <ul className="space-y-2" aria-busy="true" aria-live="polite">
+                {skeletonSuggestedPeople}
+              </ul>
+            ) : suggestedError ? (
+              <p className="rounded-xl border border-dashed border-zinc-200 p-4 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                {suggestedError}
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {suggestedPeople.map((person) => (
+                  <UserCard
+                    key={person._id}
+                    user={person}
+                    onRequireAuth={handleRequireAuth}
+                  />
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
       {/* ----- Posts header (Trending or Search results) ----- */}
       <section

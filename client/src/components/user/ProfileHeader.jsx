@@ -151,7 +151,7 @@ function ProfileHeader({
         )}
       </div>
 
-      <div className="px-1 sm:px-2">
+      <div className="relative z-10 px-1 sm:px-2">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4">
             <Avatar
