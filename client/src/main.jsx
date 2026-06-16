@@ -31,21 +31,26 @@ import "./index.css";
  *   so no other page-level routing change is required.
  */
 
-const Root = () => (
-  <AuthProvider>
-    <PreferencesProvider>
-      <SocketProvider>
-        <NotificationProvider>
-          <App />
-          <AppToaster />
-        </NotificationProvider>
-      </SocketProvider>
-    </PreferencesProvider>
-  </AuthProvider>
-);
-
+// The full provider tree is hosted inside a single catch-all data route so
+// `useBlocker` works app-wide. Defined inline (rather than as a named
+// component in this entry file) so Fast Refresh stays happy — an entry file
+// with no exports can't be refreshed, and a component here would warn.
 const router = createBrowserRouter([
-  { path: "*", element: <Root /> },
+  {
+    path: "*",
+    element: (
+      <AuthProvider>
+        <PreferencesProvider>
+          <SocketProvider>
+            <NotificationProvider>
+              <App />
+              <AppToaster />
+            </NotificationProvider>
+          </SocketProvider>
+        </PreferencesProvider>
+      </AuthProvider>
+    ),
+  },
 ]);
 
 createRoot(document.getElementById("root")).render(

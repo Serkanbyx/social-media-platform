@@ -216,14 +216,22 @@ export default function ExplorePage() {
   const [postsRetryToken, setPostsRetryToken] = useState(0);
 
   const retryPosts = useCallback(() => {
-    setInitialLoading(true);
     setPostsError("");
     setPostsRetryToken((n) => n + 1);
   }, []);
 
+  // Flip the skeleton on whenever any fetch input changes. Done as a
+  // render-time reset (React's recommended pattern) rather than inside the
+  // effect body so we never call setState synchronously within an effect.
+  const postsFetchKey = `${activeQuery}::${hasQuery}::${sort}::${postsRetryToken}`;
+  const [prevPostsFetchKey, setPrevPostsFetchKey] = useState(postsFetchKey);
+  if (prevPostsFetchKey !== postsFetchKey) {
+    setPrevPostsFetchKey(postsFetchKey);
+    setInitialLoading(true);
+  }
+
   useEffect(() => {
     let cancelled = false;
-    setInitialLoading(true);
     (async () => {
       try {
         const data = await postService.explorePosts({
@@ -289,10 +297,18 @@ export default function ExplorePage() {
   // Re-runs when the viewer's identity changes so the server-side exclusion
   // of "people you already follow" stays in sync after a fresh login.
   const viewerKey = user?._id || "guest";
-  useEffect(() => {
-    let cancelled = false;
+
+  // Prime the suggestions skeleton when the viewer changes. Render-time
+  // reset keeps the synchronous setState out of the effect body below.
+  const [prevViewerKey, setPrevViewerKey] = useState(viewerKey);
+  if (prevViewerKey !== viewerKey) {
+    setPrevViewerKey(viewerKey);
     setSuggestedLoading(true);
     setSuggestedError("");
+  }
+
+  useEffect(() => {
+    let cancelled = false;
 
     userService
       .getSuggestedUsers(SUGGESTED_PEOPLE_LIMIT)

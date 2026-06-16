@@ -94,7 +94,6 @@ export default function Dropdown({
       window.innerWidth < 768 ? MOBILE_BOTTOM_RESERVE : DESKTOP_BOTTOM_RESERVE;
     const spaceBelow = viewportH - rect.bottom - bottomReserve;
     const spaceAbove = rect.top - 16;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPlacement(
       spaceBelow < ESTIMATED_MENU_HEIGHT && spaceAbove > spaceBelow
         ? "top"
