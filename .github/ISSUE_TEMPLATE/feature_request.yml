@@ -16,7 +16,7 @@ body:
     attributes:
       label: Feature Summary
       description: A brief summary of the feature
-      placeholder: e.g., Add story/reels support to user profiles
+      placeholder: e.g., Add dark mode toggle
     validations:
       required: true
 

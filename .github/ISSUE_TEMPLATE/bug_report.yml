@@ -16,7 +16,7 @@ body:
     attributes:
       label: Bug Summary
       description: A brief summary of the bug
-      placeholder: e.g., Post creation fails when uploading image larger than 5MB
+      placeholder: e.g., BMI calculation returns incorrect value
     validations:
       required: true
 

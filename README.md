@@ -1,22 +1,39 @@
-# 💬 Pulse — Social Media Platform
+<div align="center">
+  <p>
+    <img src="./client/src/assets/logo-glyph.svg" alt="Pulse logo" width="32" height="32" />
+    <strong> Pulse</strong>
+  </p>
 
-A full-stack social media platform built with the **MERN** stack (MongoDB, Express, React, Node.js) and **Socket.io** for real-time notifications. Features follow graphs, a personalized feed, image posts via Cloudinary, comments, likes, JWT authentication, an admin moderation panel, and a fully responsive, accessibility-first UI.
+  <h1>Pulse — Social Media Platform</h1>
 
-[![Created by Serkanby](https://img.shields.io/badge/Created%20by-Serkanby-blue?style=flat-square)](https://serkanbayraktar.com/)
-[![GitHub](https://img.shields.io/badge/GitHub-Serkanbyx-181717?style=flat-square&logo=github)](https://github.com/Serkanbyx)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+  <p><em>A full-stack social media platform with JWT authentication, a follow graph, a personalized feed, image posts via Cloudinary, comments, likes, and real-time Socket.io notifications — built on the MERN stack with an accessibility-first React 19 UI.</em></p>
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)
-![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=fff)
-![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4-38BDF8?logo=tailwindcss&logoColor=fff)
-![React Router](https://img.shields.io/badge/React%20Router-7-CA4245?logo=reactrouter&logoColor=fff)
-![Node.js](https://img.shields.io/badge/Node.js-≥20-339933?logo=node.js&logoColor=fff)
-![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=fff)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=fff)
-![Mongoose](https://img.shields.io/badge/Mongoose-9-880000?logo=mongoose&logoColor=fff)
-![Socket.io](https://img.shields.io/badge/Socket.io-4-010101?logo=socket.io&logoColor=fff)
-![Cloudinary](https://img.shields.io/badge/Cloudinary-Media-3448C5?logo=cloudinary&logoColor=fff)
-![JWT](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=fff)
+  <p>
+    <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen?style=flat-square&logo=node.js&logoColor=white" alt="Node.js version" />
+    <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React 19" />
+    <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
+    <img src="https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express&logoColor=white" alt="Express 5" />
+    <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB Atlas" />
+    <img src="https://img.shields.io/badge/Tailwind-v4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4" />
+    <img src="https://img.shields.io/badge/Socket.io-4-010101?style=flat-square&logo=socket.io&logoColor=white" alt="Socket.io 4" />
+    <img src="https://img.shields.io/badge/API-Render-46E3B7?style=flat-square&logo=render&logoColor=white" alt="API on Render" />
+    <img src="https://img.shields.io/badge/Web-Netlify-00C7B7?style=flat-square&logo=netlify&logoColor=white" alt="Web on Netlify" />
+    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs welcome" />
+  </p>
+
+  <p>
+    <a href="https://social-media-platformm.netlify.app/">Live Demo</a> •
+    <a href="#features">Features</a> •
+    <a href="#installation">Quick Start</a> •
+    <a href="#api-endpoints">API Docs</a> •
+    <a href="#screenshots">Screenshots</a>
+  </p>
+
+  <a href="https://social-media-platformm.netlify.app/">
+    <img src="./docs/screenshots/01-landing.png" alt="Pulse landing page" />
+  </a>
+</div>
 
 ---
 
@@ -52,54 +69,54 @@ A full-stack social media platform built with the **MERN** stack (MongoDB, Expre
 
 ## Screenshots
 
-A 3 × 3 visual tour of Pulse, captured directly from the **[live deployment](https://social-media-platformm.netlify.app/)** — from the public landing page down to the authenticated settings.
+All screenshots are captured from the **[live deployment](https://social-media-platformm.netlify.app/)** running against the seeded demo dataset — a guided tour from the public discovery surfaces down to the authenticated settings.
 
 <table>
   <tr>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/01-landing.png" alt="Landing Page" /><br/>
-      <sub><b>Landing</b><br/>Hero, CTAs and trending preview</sub>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/01-landing.png"><img src="./docs/screenshots/01-landing.png" alt="Landing" /></a>
+      <sub><b>Landing</b><br/>Hero, CTAs & trending preview</sub>
     </td>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/02-explore.png" alt="Explore Page" /><br/>
-      <sub><b>Explore</b><br/>Trending posts from the last 7 days</sub>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/02-explore.png"><img src="./docs/screenshots/02-explore.png" alt="Explore" /></a>
+      <sub><b>Explore</b><br/>Trending posts & people to follow</sub>
     </td>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/03-login.png" alt="Sign In Page" /><br/>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/03-login.png"><img src="./docs/screenshots/03-login.png" alt="Sign In" /></a>
       <sub><b>Sign In</b><br/>Split-screen, accessible auth form</sub>
     </td>
   </tr>
   <tr>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/08-feed.png" alt="Personalized Feed" /><br/>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/08-feed.png"><img src="./docs/screenshots/08-feed.png" alt="Feed" /></a>
       <sub><b>Personalized Feed</b><br/>Reverse-chronological timeline</sub>
     </td>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/09-composer.png" alt="Post Composer" /><br/>
-      <sub><b>Post Composer</b><br/>Text, image, emoji, char counter</sub>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/09-composer.png"><img src="./docs/screenshots/09-composer.png" alt="Composer" /></a>
+      <sub><b>Post Composer</b><br/>Text, image, emoji & char counter</sub>
     </td>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/18-post-detail-auth.png" alt="Post Detail" /><br/>
-      <sub><b>Post Detail</b><br/>Threaded comments + composer</sub>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/18-post-detail-auth.png"><img src="./docs/screenshots/18-post-detail-auth.png" alt="Post Detail" /></a>
+      <sub><b>Post Detail</b><br/>Threaded comments & composer</sub>
     </td>
   </tr>
   <tr>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/05-profile.png" alt="Public Profile" /><br/>
-      <sub><b>Public Profile</b><br/>Avatar, bio, counts and post grid</sub>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/05-profile.png"><img src="./docs/screenshots/05-profile.png" alt="Public Profile" /></a>
+      <sub><b>Public Profile</b><br/>Avatar, bio, counts & post grid</sub>
     </td>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/13-settings-appearance.png" alt="Settings · Appearance" /><br/>
-      <sub><b>Settings · Appearance</b><br/>Theme, font size, reduce motion</sub>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/10-notifications-dropdown.png"><img src="./docs/screenshots/10-notifications-dropdown.png" alt="Notifications" /></a>
+      <sub><b>Notifications</b><br/>Real-time bell dropdown over Socket.io</sub>
     </td>
-    <td width="33%" align="center">
-      <img src="docs/screenshots/07-not-found.png" alt="404 Page" /><br/>
-      <sub><b>404</b><br/>Friendly fallback with way back</sub>
+    <td align="center" width="33%">
+      <a href="./docs/screenshots/13-settings-appearance.png"><img src="./docs/screenshots/13-settings-appearance.png" alt="Settings · Appearance" /></a>
+      <sub><b>Settings · Appearance</b><br/>Theme, font size & reduce motion</sub>
     </td>
   </tr>
 </table>
 
-> All screenshots were captured from the live Netlify deployment in dark mode at 1440 × 900. Additional captures (notifications dropdown, account menu, owner profile, account / privacy / notifications settings) live in [`docs/screenshots/`](docs/screenshots/).
+> Captured from the live Netlify deployment in dark mode at 1440 × 900. Bonus views — account menu, owner profile, 404 page, and the account / privacy / notifications settings panels — also live in [`docs/screenshots/`](docs/screenshots/).
 
 ---
 
@@ -426,57 +443,73 @@ Base URL: `${VITE_API_URL}` (defaults to `http://localhost:5000/api`).
 
 ## Project Structure
 
+A clean monorepo layout with an explicit backend / frontend split. Each panel below is collapsible — expand the one you care about.
+
+<details open>
+<summary><b>Server</b> — Express 5 + Mongoose 9 + Socket.io API</summary>
+
+```
+server/
+├── config/          # env loader, MongoDB + Cloudinary clients, swagger spec
+├── controllers/     # auth, user, post, comment, like, follow, feed, notification, upload, admin
+├── middleware/      # protect, optionalAuth, adminOnly, validate, sanitize, rateLimiters, upload, errorHandler
+├── models/          # User, Post, Comment, Notification (with cascade hooks)
+├── routes/          # one router per feature, mounted under /api/*
+├── seed/            # adminSeed (idempotent bootstrap), demoSeed, wipeDemo
+├── services/        # cross-controller helpers (notifications, etc.)
+├── socket/          # Socket.io bootstrap + JWT handshake + per-user rooms
+├── utils/           # asyncHandler, escapeRegex, generateToken, pickFields
+├── validators/      # express-validator chains per resource
+├── index.js         # Express app + http.Server + Socket.io entry point
+├── .env.example     # placeholders only — never commit a real .env
+└── package.json
+```
+
+</details>
+
+<details>
+<summary><b>Client</b> — React 19 + Vite 8 SPA</summary>
+
+```
+client/
+├── public/          # favicon, _redirects for Netlify SPA routing
+├── src/
+│   ├── api/         # Axios instance + JWT interceptor
+│   ├── assets/      # local logo SVGs
+│   ├── components/  # admin, guards, layout, notification, post, settings, ui, user
+│   ├── context/     # AuthContext, NotificationContext, PreferencesContext, SocketContext
+│   ├── hooks/       # useInfiniteScroll, useDebounce, useMediaQuery, useClickOutside…
+│   ├── pages/       # auth, feed, explore, post, profile, notifications, settings, admin
+│   ├── services/    # API wrappers per resource
+│   ├── utils/       # date, format, linkify, validation helpers
+│   ├── App.jsx      # route tree (lazy + Suspense + ErrorBoundary)
+│   ├── main.jsx     # React root + providers
+│   └── index.css    # Tailwind layers + design tokens
+├── .env.example
+├── eslint.config.js
+├── vite.config.js
+└── package.json
+```
+
+</details>
+
+<details>
+<summary><b>Repository root</b> — docs, governance & deployment config</summary>
+
 ```
 social-media-platform/
-├── client/                          # React 19 + Vite 8 frontend
-│   ├── public/                      # Static assets, _redirects for Netlify SPA routing
-│   ├── src/
-│   │   ├── api/                     # Axios instance + endpoint wrappers
-│   │   ├── assets/                  # Local images, icons, fonts
-│   │   ├── components/
-│   │   │   ├── admin/               # Admin tables, action menus
-│   │   │   ├── guards/              # ProtectedRoute · GuestOnlyRoute · AdminRoute
-│   │   │   ├── layout/              # MainLayout · SettingsLayout · AdminLayout · Navbar · Sidebar · Footer
-│   │   │   ├── notification/        # Bell, dropdown, list item
-│   │   │   ├── post/                # PostCard, composer, image grid
-│   │   │   ├── settings/            # Form sections (account, appearance, privacy, notifications)
-│   │   │   ├── ui/                  # Spinner · Banner · ErrorBoundary · Modal · Skeleton · Tooltip
-│   │   │   └── user/                # Avatars, mini-profiles, follow button
-│   │   ├── context/                 # AuthContext · NotificationContext · PreferencesContext · SocketContext
-│   │   ├── hooks/                   # useInfiniteScroll · useDebouncedValue · useMediaQuery
-│   │   ├── pages/                   # auth · feed · explore · post · profile · notifications · settings · admin
-│   │   ├── services/                # Socket client, notification service
-│   │   ├── utils/                   # Date, format, validation helpers
-│   │   ├── App.jsx                  # Route tree (lazy + Suspense + ErrorBoundary)
-│   │   ├── main.jsx                 # React root + providers
-│   │   └── index.css                # Tailwind layers + design tokens
-│   ├── .env.example
-│   ├── eslint.config.js
-│   ├── vite.config.js
-│   └── package.json
-│
-├── server/                          # Node 20+ · Express 5 · Mongoose 9 backend
-│   ├── config/                      # env loader, MongoDB + Cloudinary clients
-│   ├── controllers/                 # auth · user · post · comment · like · follow · feed · notification · upload · admin
-│   ├── middleware/                  # protect · optionalAuth · adminOnly · validate · sanitize · rateLimiters · upload · errorHandler
-│   ├── models/                      # User · Post · Comment · Notification (with cascade hooks)
-│   ├── routes/                      # One router per feature, mounted under /api/*
-│   ├── seed/                        # adminSeed.js (idempotent admin bootstrap), demoSeed.js
-│   ├── services/                    # Cross-controller helpers (notifications, etc.)
-│   ├── socket/                      # Socket.io bootstrap + JWT handshake + per-user rooms
-│   ├── utils/                       # cookies, asyncHandler, ApiError
-│   ├── validators/                  # express-validator chains per resource
-│   ├── index.js                     # App + http.Server + Socket.io entry point
-│   ├── .env.example                 # Placeholders only — never commit a real .env
-│   └── package.json
-│
-├── .gitignore                       # Excludes every .env, node_modules, dist, uploads, logs
-├── netlify.toml                     # Netlify build + SPA redirects
-├── render.yaml                      # Render service blueprint
-├── LICENSE                          # MIT
-├── SECURITY.md                      # Security policy & disclosure
-└── README.md                        # This file
+├── client/          # → see Client panel above
+├── server/          # → see Server panel above
+├── docs/            # build-guide.md (original roadmap) + screenshots/
+├── .github/         # issue templates, PR template, CODE_OF_CONDUCT, CONTRIBUTING, SECURITY
+├── .gitignore       # excludes every .env, node_modules, dist, uploads, logs
+├── netlify.toml     # Netlify build + SPA redirects
+├── render.yaml      # Render service blueprint
+├── LICENSE          # MIT
+└── README.md        # this file
 ```
+
+</details>
 
 ---
 
@@ -497,7 +530,7 @@ social-media-platform/
 - **Error Handling** — Global handler returns `{ status, message }` and only includes the stack trace when `NODE_ENV !== 'production'`.
 - **Secret Management** — `.env` is gitignored; only `.env.example` files (placeholders) are tracked. JWT and admin password requirements are validated at boot / seed time.
 
-> See [SECURITY.md](SECURITY.md) for the responsible disclosure policy.
+> See [SECURITY.md](.github/SECURITY.md) for the responsible disclosure policy.
 
 ---
 
